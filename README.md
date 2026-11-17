@@ -35,7 +35,7 @@ src/
     treats             vouchers you have received (QR codes)
     settings/privacy   incognito sachet passes
   components/          UI primitives + ProfileCard (restyle these with the designs)
-  constants/           intents, culturally rooted prompts, Ghana data (schools, languages, gifts, pricing)
+  constants/           intents, culturally rooted prompts, Ghana data (schools, languages, sachet pricing)
   features/            data access (api.ts), voice recorder, shared-ground ranking, onboarding state
   lib/supabase.ts      Supabase client
   theme/tokens.ts      placeholder design tokens
@@ -50,7 +50,7 @@ supabase/
 
 ```bash
 supabase link --project-ref <ref>
-supabase db push
+supabase db push --include-seed   # seed = placeholder partners for treats
 supabase secrets set PAYSTACK_SECRET_KEY=sk_test_...
 supabase functions deploy gift-initiate
 supabase functions deploy paystack-webhook --no-verify-jwt
