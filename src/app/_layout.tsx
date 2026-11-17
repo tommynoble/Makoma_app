@@ -1,15 +1,71 @@
+import { useEffect } from 'react';
+import { MaterialSymbols_400Regular } from '@expo-google-fonts/material-symbols/400Regular';
+import { MaterialSymbols_400Regular_Filled } from '@expo-google-fonts/material-symbols/400Regular_Filled';
+import { Newsreader_400Regular } from '@expo-google-fonts/newsreader/400Regular';
+import { Newsreader_400Regular_Italic } from '@expo-google-fonts/newsreader/400Regular_Italic';
+import { Newsreader_500Medium } from '@expo-google-fonts/newsreader/500Medium';
+import { Newsreader_500Medium_Italic } from '@expo-google-fonts/newsreader/500Medium_Italic';
+import { Newsreader_600SemiBold } from '@expo-google-fonts/newsreader/600SemiBold';
+import { PlusJakartaSans_500Medium } from '@expo-google-fonts/plus-jakarta-sans/500Medium';
+import { PlusJakartaSans_600SemiBold } from '@expo-google-fonts/plus-jakarta-sans/600SemiBold';
+import { PlusJakartaSans_700Bold } from '@expo-google-fonts/plus-jakarta-sans/700Bold';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { OnboardingProvider } from '@/features/onboarding/OnboardingContext';
+import { OnboardingProvider } from '@/features/onboarding/onboarding-context';
+import { colors, fonts } from '@/theme';
+
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  // Runtime loading works in Expo Go and on web. For store builds, also embed
+  // these with the expo-font config plugin so they are ready at launch.
+  const [loaded, error] = useFonts({
+    Newsreader_400Regular,
+    Newsreader_400Regular_Italic,
+    Newsreader_500Medium,
+    Newsreader_500Medium_Italic,
+    Newsreader_600SemiBold,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+    MaterialSymbols_400Regular,
+    MaterialSymbols_400Regular_Filled,
+  });
+
+  useEffect(() => {
+    if (loaded || error) SplashScreen.hideAsync();
+  }, [loaded, error]);
+
+  if (!loaded && !error) return null;
+
   return (
     <SafeAreaProvider>
       <OnboardingProvider>
-        <StatusBar style="auto" />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="chat/[matchId]" options={{ headerShown: true, title: 'Chat' }} />
+        <StatusBar style="dark" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.surface },
+            headerStyle: { backgroundColor: colors.surface },
+            headerTintColor: colors.onSurface,
+            headerTitleStyle: { fontFamily: fonts.serifMedium, fontSize: 20 },
+            headerShadowVisible: false,
+          }}
+        >
+          <Stack.Screen
+            name="reply"
+            options={{
+              presentation: 'formSheet',
+              sheetGrabberVisible: true,
+              sheetAllowedDetents: [0.85, 1],
+              sheetCornerRadius: 36,
+              contentStyle: { backgroundColor: colors.surfaceContainerLowest },
+            }}
+          />
+          <Stack.Screen name="chat/[matchId]" options={{ headerShown: true, title: '' }} />
           <Stack.Screen name="treats" options={{ headerShown: true, title: 'My treats' }} />
           <Stack.Screen name="settings/privacy" options={{ headerShown: true, title: 'Privacy' }} />
         </Stack>

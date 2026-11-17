@@ -1,5 +1,19 @@
 export type PromptCategory = 'banter' | 'ambition' | 'character' | 'faith_family';
 
+/**
+ * The three prompt slots in onboarding. Every profile gets one from each, so a
+ * profile always shows culture, substance and humour.
+ */
+export const PROMPT_SLOTS = [
+  { id: 'food_culture', label: 'Food & Culture', icon: 'restaurant', example: 'My non-negotiable Sunday spot is…', promptIds: ['sunday_spot', 'sunday_kenkey', 'waakye_order', 'chop_bar', 'detty_december'] },
+  { id: 'values_ambition', label: 'Values & Ambition', icon: 'spa', example: 'The standard I hold myself to…', promptIds: ['standard', 'building_now', 'five_years', 'proud_of', 'respect', 'green_flag', 'family_role', 'faith'] },
+  { id: 'playful_debate', label: 'Playful Debate', icon: 'local_fire_department', example: 'Jollof wars aside, my actual hot take…', promptIds: ['hot_take', 'jollof_dealbreaker', 'banku_vs_fufu', 'trotro_story', 'aunty_question'] },
+] as const;
+
+export type PromptSlotId = (typeof PROMPT_SLOTS)[number]['id'];
+
+export const slotOfPrompt = (promptId: string) => PROMPT_SLOTS.find((s) => (s.promptIds as readonly string[]).includes(promptId));
+
 export interface PromptDefinition {
   id: string;
   category: PromptCategory;
@@ -13,6 +27,8 @@ export interface PromptDefinition {
  */
 export const PROMPTS: PromptDefinition[] = [
   // Banter
+  { id: 'sunday_spot', category: 'banter', text: 'My non-negotiable Sunday spot is…' },
+  { id: 'hot_take', category: 'banter', text: 'Jollof wars aside, my actual hot take…' },
   { id: 'sunday_kenkey', category: 'banter', text: 'My favourite spot for Sunday kenkey is…' },
   {
     id: 'jollof_dealbreaker',
@@ -27,6 +43,7 @@ export const PROMPTS: PromptDefinition[] = [
   { id: 'banku_vs_fufu', category: 'banter', text: 'Banku or fufu, and I will defend my answer:' },
 
   // Ambition ("capable man / good woman": show capacity and direction)
+  { id: 'standard', category: 'character', text: 'The standard I hold myself to…' },
   { id: 'building_now', category: 'ambition', text: 'Right now I am building…' },
   { id: 'five_years', category: 'ambition', text: 'In five years, I see myself…' },
   { id: 'proud_of', category: 'ambition', text: 'Something I worked hard for and I am proud of…' },

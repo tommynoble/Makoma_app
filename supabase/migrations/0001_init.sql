@@ -28,12 +28,19 @@ create table profiles (
   industry text,
   life_goals text check (char_length(life_goals) <= 300),
   church text,
+  headline text check (char_length(headline) <= 80),
+  drinks text check (drinks in ('never', 'socially', 'regularly')),
+  heritage text,
+  hide_exact_distance boolean not null default true,
+  pledge_accepted_at timestamptz,
   institution_ids text[] not null default '{}',
   neighborhood text,
   city text not null,
   languages text[] not null default '{en}',
   voice_intro_path text,
-  voice_intro_duration_ms int,
+  voice_intro_duration_ms int check (voice_intro_duration_ms between 0 and 20000),
+  voice_prompt_text text,
+  voice_transcript text,
   verification verification_status not null default 'unverified',
   visibility visibility not null default 'public',
   incognito_until timestamptz,
@@ -55,6 +62,7 @@ create table photos (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid not null references profiles on delete cascade,
   storage_path text not null,
+  caption text check (char_length(caption) <= 80),
   position smallint not null,
   created_at timestamptz not null default now()
 );
@@ -66,7 +74,9 @@ create table likes (
   liker_id uuid references profiles on delete cascade,
   liked_id uuid references profiles on delete cascade,
   prompt_id text,          -- like a specific prompt ("comment on their kenkey answer")
-  comment text check (char_length(comment) <= 200),
+  comment text check (char_length(comment) <= 250),
+  voice_reply_path text,   -- optional 20s voice reply attached to the like
+  rose boolean not null default false,
   created_at timestamptz not null default now(),
   primary key (liker_id, liked_id),
   check (liker_id <> liked_id)
@@ -288,9 +298,10 @@ create policy "update own profile" on profiles for update using (id = auth.uid()
 -- Users must not set their own verification or paid visibility directly:
 -- allowlist the columns they may update (column revokes don't override a table grant).
 revoke update on profiles from authenticated;
-grant update (first_name, interested_in, intent, occupation, industry, life_goals, church,
+grant update (first_name, interested_in, intent, occupation, industry, life_goals, church, headline, drinks,
+              heritage, hide_exact_distance, pledge_accepted_at,
               institution_ids, neighborhood, city, languages, voice_intro_path,
-              voice_intro_duration_ms, is_active, last_active_at) on profiles to authenticated;
+              voice_intro_duration_ms, voice_prompt_text, voice_transcript, is_active, last_active_at) on profiles to authenticated;
 
 create policy "view prompts of visible profiles" on profile_prompts for select using (can_view_profile(auth.uid(), profile_id));
 create policy "manage own prompts" on profile_prompts for all using (profile_id = auth.uid()) with check (profile_id = auth.uid());
@@ -325,7 +336,7 @@ create policy "read own purchases" on sachet_purchases for select using (profile
 -- ---------------------------------------------------------------------------
 
 -- Like someone. Returns the match id if it's mutual, else null.
-create or replace function like_profile(p_target uuid, p_prompt_id text default null, p_comment text default null)
+create or replace function like_profile(p_target uuid, p_prompt_id text default null, p_comment text default null, p_rose boolean default false)
 returns uuid language plpgsql security definer set search_path = public as $$
 declare
   me uuid := auth.uid();
@@ -334,8 +345,8 @@ begin
   if me is null then raise exception 'not signed in'; end if;
   if is_blocked_between(me, p_target) then raise exception 'unavailable'; end if;
 
-  insert into likes (liker_id, liked_id, prompt_id, comment)
-  values (me, p_target, p_prompt_id, p_comment)
+  insert into likes (liker_id, liked_id, prompt_id, comment, rose)
+  values (me, p_target, p_prompt_id, p_comment, p_rose)
   on conflict do nothing;
 
   if exists (select 1 from likes where liker_id = p_target and liked_id = me) then
@@ -404,12 +415,13 @@ create or replace function discover_feed(
       'id', r.id, 'firstName', r.first_name, 'birthDate', r.birth_date, 'gender', r.gender,
       'interestedIn', r.interested_in, 'intent', r.intent, 'occupation', r.occupation,
       'industry', r.industry, 'lifeGoals', r.life_goals, 'church', r.church,
+      'headline', r.headline, 'drinks', r.drinks, 'heritage', r.heritage, 'hideExactDistance', r.hide_exact_distance,
       'institutionIds', r.institution_ids, 'neighborhood', r.neighborhood, 'city', r.city,
       'languages', r.languages, 'verification', r.verification, 'visibility', r.visibility,
-      'voiceIntroDurationMs', r.voice_intro_duration_ms, 'createdAt', r.created_at,
+      'voicePrompt', case when r.voice_intro_path is null then null else jsonb_build_object('promptText', r.voice_prompt_text, 'audioUrl', r.voice_intro_path, 'durationMs', r.voice_intro_duration_ms, 'transcript', r.voice_transcript) end, 'createdAt', r.created_at,
       'prompts', coalesce((select jsonb_agg(jsonb_build_object('promptId', pp.prompt_id, 'answer', pp.answer) order by pp.position)
                            from profile_prompts pp where pp.profile_id = r.id), '[]'::jsonb),
-      'photos', coalesce((select jsonb_agg(jsonb_build_object('id', ph.id, 'url', ph.storage_path, 'position', ph.position) order by ph.position)
+      'photos', coalesce((select jsonb_agg(jsonb_build_object('id', ph.id, 'source', ph.storage_path, 'caption', ph.caption, 'position', ph.position) order by ph.position)
                           from photos ph where ph.profile_id = r.id), '[]'::jsonb)
     ),
     'shared', jsonb_build_object(
@@ -420,24 +432,21 @@ create or replace function discover_feed(
   from ranked r;
 $$;
 
--- Gift lock (anti-scam). Treats unlock only once a conversation is real:
---   5+ messages exchanged with BOTH people having replied, OR a voice note sent.
+-- Treat lock (anti-scam). Treats unlock once 3 voice notes have been exchanged,
+-- with BOTH people having sent at least one. Voice is hard to fake at scale.
 -- Mirrored in src/features/gifts/unlock.ts for the progress UI; this is the source of truth.
 -- There is deliberately no way to *request* a gift anywhere in the product.
 create or replace function gift_unlock_status(p_match uuid) returns jsonb
 language sql stable security definer set search_path = public as $$
   with s as (
-    select count(*) filter (where kind in ('text', 'voice')) as msgs,
-           count(*) filter (where kind = 'voice') as voice,
-           count(distinct sender_id) filter (where kind in ('text', 'voice')) as senders
-    from messages where match_id = p_match
+    select count(*) as voice, count(distinct sender_id) as senders
+    from messages where match_id = p_match and kind = 'voice'
   )
   select case when is_match_participant(p_match) then jsonb_build_object(
-    'messages', s.msgs,
-    'messagesRequired', 5,
     'voiceNotes', s.voice,
-    'bothReplied', s.senders >= 2,
-    'unlocked', (s.msgs >= 5 and s.senders >= 2) or s.voice >= 1
+    'voiceNotesRequired', 3,
+    'bothSent', s.senders >= 2,
+    'unlocked', s.voice >= 3 and s.senders >= 2
   ) end
   from s;
 $$;

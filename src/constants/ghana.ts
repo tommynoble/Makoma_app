@@ -32,6 +32,20 @@ export const INSTITUTIONS: { id: string; label: string; kind: 'university' | 'sh
   { id: 'yaa_asantewaa', label: "Yaa Asantewaa Girls' SHS", kind: 'shs' },
 ];
 
+/** Neighbourhood options for the location picker. Diaspora bases included. */
+export const NEIGHBORHOODS: { city: string; area: string }[] = [
+  { city: 'Accra', area: 'East Legon' },
+  { city: 'Accra', area: 'Cantonments' },
+  { city: 'Accra', area: 'Airport Residential' },
+  { city: 'Accra', area: 'Osu' },
+  { city: 'Accra', area: 'Labone' },
+  { city: 'Accra', area: 'Spintex' },
+  { city: 'Tema', area: 'Community 25' },
+  { city: 'Kumasi', area: 'Ahodwo' },
+  { city: 'Kumasi', area: 'Nhyiaeso' },
+  { city: 'Takoradi', area: 'Beach Road' },
+];
+
 export const CITIES = ['Accra', 'Kumasi', 'Tema', 'Takoradi', 'Cape Coast', 'Tamale', 'Ho', 'Koforidua'];
 
 export const INDUSTRIES = [

@@ -9,19 +9,19 @@ export interface IntentOption {
 /** Shown during onboarding and used as the primary Discover filter. */
 export const INTENTS: IntentOption[] = [
   {
-    id: 'serious',
-    label: 'Looking for something serious',
-    description: 'A committed relationship with someone intentional.',
+    id: 'marriage',
+    label: 'Marriage-Oriented',
+    description: 'Looking to build a lifelong home & family',
   },
   {
-    id: 'marriage',
-    label: 'Marriage-oriented',
-    description: 'Ready to meet someone to build a home and family with.',
+    id: 'serious',
+    label: 'Serious Relationship',
+    description: 'Dating with long-term partnership in mind',
   },
   {
     id: 'friendship_networking',
-    label: 'Genuine friendship & networking',
-    description: 'New people, good vibes and real connections, no pressure.',
+    label: 'Genuine Friendship & Networking',
+    description: 'Connecting with like-minded people, no pressure',
   },
 ];
 

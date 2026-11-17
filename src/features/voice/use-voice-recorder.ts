@@ -7,7 +7,8 @@ import {
 } from 'expo-audio';
 
 export const VOICE_NOTE_MAX_MS = 60_000;
-export const VOICE_INTRO_MAX_MS = 30_000;
+export const VOICE_INTRO_MAX_MS = 20_000;
+export const VOICE_REPLY_MAX_MS = 20_000;
 
 export interface VoiceClip {
   uri: string;

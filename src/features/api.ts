@@ -7,7 +7,7 @@
 import { File } from 'expo-file-system';
 import { isBackendConfigured, supabase } from '@/lib/supabase';
 import type { DiscoverCard, DiscoverFilters, GiftOffer, GiftUnlock, Message, Visibility, Voucher } from '@/types/domain';
-import { MOCK_CARDS, MOCK_GIFT_OFFERS, MOCK_VOUCHERS } from './mockData';
+import { MOCK_CARDS, MOCK_GIFT_OFFERS, MOCK_VOUCHERS } from './mock-data';
 
 // ---- Discover -------------------------------------------------------------
 
@@ -35,12 +35,13 @@ export async function fetchDiscover(filters: DiscoverFilters): Promise<DiscoverC
 }
 
 /** Returns the match id if the like was mutual. */
-export async function likeProfile(targetId: string, openingPromptId?: string, comment?: string) {
+export async function likeProfile(targetId: string, opts: { promptId?: string; comment?: string; rose?: boolean } = {}) {
   if (!isBackendConfigured) return null;
   const { data, error } = await supabase.rpc('like_profile', {
     p_target: targetId,
-    p_prompt_id: openingPromptId ?? null,
-    p_comment: comment ?? null,
+    p_prompt_id: opts.promptId ?? null,
+    p_comment: opts.comment?.trim() || null,
+    p_rose: !!opts.rose,
   });
   if (error) throw error;
   return (data as string | null) ?? null;

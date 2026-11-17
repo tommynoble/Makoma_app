@@ -1,12 +1,36 @@
 import { Tabs } from 'expo-router';
-import { colors } from '@/theme/tokens';
+import { Icon, type IconName } from '@/components';
+import { colors, fonts, shadows } from '@/theme';
+
+const TABS: { name: string; title: string; icon: IconName }[] = [
+  { name: 'discover', title: 'Discover', icon: 'local_fire_department' },
+  { name: 'matches', title: 'Matches', icon: 'forum' },
+  { name: 'likes', title: 'Likes', icon: 'favorite' },
+  { name: 'profile', title: 'Profile', icon: 'person' },
+];
 
 export default function TabsLayout() {
   return (
-    <Tabs screenOptions={{ tabBarActiveTintColor: colors.primary }}>
-      <Tabs.Screen name="discover" options={{ title: 'Discover' }} />
-      <Tabs.Screen name="matches" options={{ title: 'Matches' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.onSurfaceVariant,
+        tabBarLabelStyle: { fontFamily: fonts.sansBold, fontSize: 11, letterSpacing: 0.44 },
+        tabBarStyle: { backgroundColor: colors.surface, borderTopWidth: 0, boxShadow: shadows.tabBar, height: 64 + 20, paddingTop: 8 },
+        sceneStyle: { backgroundColor: colors.surface },
+      }}
+    >
+      {TABS.map((t) => (
+        <Tabs.Screen
+          key={t.name}
+          name={t.name}
+          options={{
+            title: t.title,
+            tabBarIcon: ({ focused }) => <Icon name={t.icon} size={24} color={focused ? 'primary' : 'onSurfaceVariant'} filled={focused} />,
+          }}
+        />
+      ))}
     </Tabs>
   );
 }

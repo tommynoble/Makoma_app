@@ -55,17 +55,18 @@ insert into auth.users values ('00000000-0000-0000-0000-0000000000f1');  -- part
 insert into partner_staff values ('00000000-0000-0000-0000-0000000000f1', 'legon_cafe');
 set role authenticated;
 
-\echo '11. Gift lock after 1 message from one side -> expect unlocked false, 1 message'
+\echo '11. Treat lock: text messages never unlock -> expect false, 0 voice notes'
 set request.jwt.sub = '00000000-0000-0000-0000-00000000000a';
-select gift_unlock_status(id) ->> 'unlocked', gift_unlock_status(id) ->> 'messages' from matches;
+insert into messages (match_id, kind, body) select id, 'text', 'hello again' from matches, generate_series(1, 6);
+select gift_unlock_status(id) ->> 'unlocked', gift_unlock_status(id) ->> 'voiceNotes' from matches;
 
-\echo '12. Five messages from ONE side only -> still locked (expect false)'
-insert into messages (match_id, kind, body) select id, 'text', 'hello again' from matches, generate_series(1, 4);
+\echo '12. Three voice notes from ONE side only -> still locked (expect false)'
+insert into messages (match_id, kind, audio_path, duration_ms) select id, 'voice', 'x.m4a', 9000 from matches, generate_series(1, 3);
 select gift_unlock_status(id) ->> 'unlocked' from matches;
 
-\echo '13. Esi replies (both sides, 6 messages) -> expect true'
+\echo '13. Esi sends a voice note too (both sides, 4 total) -> expect true'
 set request.jwt.sub = '00000000-0000-0000-0000-00000000000c';
-insert into messages (match_id, kind, body) select id, 'text', 'Fine oo, and you?' from matches;
+insert into messages (match_id, kind, audio_path, duration_ms) select id, 'voice', 'y.m4a', 12000 from matches;
 select gift_unlock_status(id) ->> 'unlocked' from matches;
 
 \echo '14. Outsider Akosua gets no unlock status -> expect empty'

@@ -23,8 +23,19 @@ export interface ProfilePrompt {
 
 export interface Photo {
   id: string;
-  url: string;
+  /** Remote URL, or a bundled asset (require) for demo data. */
+  source: string | number;
+  caption?: string;
   position: number;
+}
+
+/** A recorded answer to a prompt, shown as a player on the profile. */
+export interface VoicePrompt {
+  promptText: string;
+  audioUrl?: string;
+  durationMs: number;
+  /** Short written teaser of what is said. */
+  transcript?: string;
 }
 
 export interface Profile {
@@ -37,9 +48,16 @@ export interface Profile {
 
   // "Ambition & character" — not just looks
   occupation?: string;
+  /** One-line self description shown under the name. */
+  headline?: string;
   industry?: string;
   lifeGoals?: string;
   church?: string; // optional faith community, a strong social signal in Ghana
+  drinks?: 'never' | 'socially' | 'regularly';
+  /** Hometown / family roots, e.g. "Kumasi • Accra". */
+  heritage?: string;
+  /** Show only the neighbourhood, never an exact distance. */
+  hideExactDistance?: boolean;
 
   // Social proof
   institutionIds: string[]; // universities, SHS (alumni networks matter)
@@ -49,8 +67,7 @@ export interface Profile {
   languages: LanguageId[];
   prompts: ProfilePrompt[];
   photos: Photo[];
-  voiceIntroUrl?: string;
-  voiceIntroDurationMs?: number;
+  voicePrompt?: VoicePrompt;
 
   verification: VerificationStatus;
   visibility: Visibility;
@@ -138,10 +155,10 @@ export interface Voucher {
 /** Anti-scam gift lock progress. Source of truth: gift_unlock_status() in the DB. */
 export interface GiftUnlock {
   unlocked: boolean;
-  messages: number;
-  messagesRequired: number;
   voiceNotes: number;
-  bothReplied: boolean;
+  voiceNotesRequired: number;
+  /** Both people have sent at least one voice note. */
+  bothSent: boolean;
 }
 
 /** Sachet pricing: small, short-duration passes instead of monthly subscriptions. */
