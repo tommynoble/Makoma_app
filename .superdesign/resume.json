@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "targets": {
+    "/discover": {
+      "targetKind": "existing-ui",
+      "projectId": "0679ad46-a10c-4683-842b-a5f49ed9eeae",
+      "baselineDraftId": null,
+      "activeDraftId": "15cb3fc0-a02a-498c-89d9-caa311707888",
+      "designSystemPath": ".superdesign/design-system.md",
+      "referenceIds": [
+        "mock/akosua",
+        "mock/osu-terrace",
+        "mock/kwame"
+      ],
+      "brandAssets": {},
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "src/theme/colors.ts",
+        "src/theme/typography.ts",
+        "src/theme/spacing.ts",
+        "src/app/(tabs)/discover.tsx",
+        "src/components/profile/sections.tsx",
+        "src/components/surface.tsx",
+        "src/components/button.tsx",
+        "src/app/(tabs)/_layout.tsx"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "0c1265b71a8dd4984182cea45d818fcbded806d6fbdae1d8210c184321d7533e",
+        "src/theme/colors.ts": "57100dabcbd349caa77671694d896f612911bfd731984618efb08d4c60d2889b",
+        "src/theme/typography.ts": "7a318be332f6b94d93b90da5828b1d3b1ae3bcda1b78eac5699f0b738f74f16e",
+        "src/theme/spacing.ts": "f58eb84dfe1d646475c93a1bfae0934bec406cb5d1a74a14571b3f06b3e4e546",
+        "src/app/(tabs)/discover.tsx": "db815b006f2fa52dee015fde4d7d97f97b6b131fb36d134bcd3b137afbc41cb1",
+        "src/components/profile/sections.tsx": "aad8b3b0f6cbd16d8eba57d535c65eb4c67581d7172cb59b6c0c95ef6f251f58",
+        "src/components/surface.tsx": "b80721168fe66125cfdbc081da18df619d8a020d87574bd35335b200f0ba8222",
+        "src/components/button.tsx": "da3699b29004f0b0158c89c90d11a45bd2f364de91c6cc48e13908730e9ef3cd",
+        "src/app/(tabs)/_layout.tsx": "e3f3ef08235d166aa61654231a36226605cb2bc1da840da7d864812359c1c473"
+      },
+      "components": [],
+      "drafts": {
+        "15cb3fc0-a02a-498c-89d9-caa311707888": {
+          "title": "Makoma Discover Screen",
+          "visualDirection": "Superdesign's own take on Warm Editorial Trust (fresh design, not a reproduction)",
+          "parentDraftId": null,
+          "currentVersion": 1
+        }
+      },
+      "updatedAt": "2026-11-17T23:25:31Z"
+    }
+  }
+}
