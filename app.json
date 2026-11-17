@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "Makoma",
+    "slug": "makoma",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.makoma.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.makoma.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Makoma uses your microphone so you can send voice notes and record your voice intro."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Makoma uses your camera for selfie verification.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Makoma needs access to your photos so you can add them to your profile."
+        }
+      ],
+      "expo-secure-store",
+      "expo-web-browser"
+    ],
+    "scheme": "makoma",
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

@@ -1,0 +1,139 @@
+/**
+ * Core domain model for Makoma. Mirrors supabase/migrations/0001_init.sql.
+ * Keep these in sync with the database (or generate with `supabase gen types`).
+ */
+
+export type IntentId = 'serious' | 'marriage' | 'friendship_networking';
+
+export type Gender = 'man' | 'woman';
+
+export type LanguageId = 'en' | 'tw' | 'ga' | 'ee' | 'fat' | 'dag' | 'ha' | 'pcm';
+
+export type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected';
+
+/** Who can see this profile in Discover. */
+export type Visibility =
+  | 'public' // everyone matching your filters
+  | 'incognito'; // only people you have liked first (premium)
+
+export interface ProfilePrompt {
+  promptId: string;
+  answer: string;
+}
+
+export interface Photo {
+  id: string;
+  url: string;
+  position: number;
+}
+
+export interface Profile {
+  id: string;
+  firstName: string;
+  birthDate: string; // ISO date
+  gender: Gender;
+  interestedIn: Gender[];
+  intent: IntentId;
+
+  // "Ambition & character" — not just looks
+  occupation?: string;
+  industry?: string;
+  lifeGoals?: string;
+  church?: string; // optional faith community, a strong social signal in Ghana
+
+  // Social proof
+  institutionIds: string[]; // universities, SHS (alumni networks matter)
+  neighborhood?: string;
+  city: string;
+
+  languages: LanguageId[];
+  prompts: ProfilePrompt[];
+  photos: Photo[];
+  voiceIntroUrl?: string;
+  voiceIntroDurationMs?: number;
+
+  verification: VerificationStatus;
+  visibility: Visibility;
+  createdAt: string;
+}
+
+/** What one profile has in common with another; shown in place of "mutual friends". */
+export interface SharedGround {
+  institutions: string[];
+  languages: LanguageId[];
+  sameNeighborhood: boolean;
+  sameChurch: boolean;
+  sameIntent: boolean;
+}
+
+export interface DiscoverCard {
+  profile: Profile;
+  shared: SharedGround;
+  distanceKm?: number;
+}
+
+export interface Match {
+  id: string;
+  otherProfile: Profile;
+  createdAt: string;
+  lastMessage?: Message;
+}
+
+export type MessageKind = 'text' | 'voice' | 'gift';
+
+interface MessageBase {
+  id: string;
+  matchId: string;
+  senderId: string;
+  createdAt: string;
+  readAt?: string;
+}
+
+export interface TextMessage extends MessageBase {
+  kind: 'text';
+  body: string;
+}
+
+export interface VoiceMessage extends MessageBase {
+  kind: 'voice';
+  audioUrl: string;
+  durationMs: number;
+}
+
+export interface GiftMessage extends MessageBase {
+  kind: 'gift';
+  giftId: string;
+  amountPesewas: number; // GHS × 100
+  note?: string;
+  status: GiftStatus;
+}
+
+export type Message = TextMessage | VoiceMessage | GiftMessage;
+
+export type GiftStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+
+export interface GiftOption {
+  id: string;
+  label: string; // "Sobolo", "Coffee", "Kelewele"
+  emoji: string;
+  amountPesewas: number;
+}
+
+/** Sachet pricing: small, short-duration passes instead of monthly subscriptions. */
+export interface SachetPlan {
+  id: string;
+  feature: 'incognito' | 'boost' | 'see_likes';
+  label: string;
+  durationHours: number;
+  pricePesewas: number;
+}
+
+export interface DiscoverFilters {
+  intents: IntentId[];
+  minAge: number;
+  maxAge: number;
+  verifiedOnly: boolean;
+  languages: LanguageId[];
+  institutionIds: string[];
+  city?: string;
+}
