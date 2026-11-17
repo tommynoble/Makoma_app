@@ -9,4 +9,5 @@ psql -d postgres -qc "create database $DB"
 trap 'psql -d postgres -qc "drop database $DB"' EXIT
 psql -d "$DB" -q -v ON_ERROR_STOP=1 -f tests/supabase_stubs.sql 2>&1 | grep -v -i "wal_level" || true
 for f in migrations/*.sql; do psql -d "$DB" -q -v ON_ERROR_STOP=1 -f "$f"; done
+psql -d "$DB" -q -v ON_ERROR_STOP=1 -f seed.sql
 psql -d "$DB" -qtA -f tests/smoke_test.sql 2>&1

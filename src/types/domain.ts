@@ -100,23 +100,48 @@ export interface VoiceMessage extends MessageBase {
   durationMs: number;
 }
 
+/** A treat sent in chat. The recipient gets a partner voucher, never cash. */
 export interface GiftMessage extends MessageBase {
   kind: 'gift';
   giftId: string;
-  amountPesewas: number; // GHS × 100
+  offerId: string;
   note?: string;
-  status: GiftStatus;
 }
 
 export type Message = TextMessage | VoiceMessage | GiftMessage;
 
 export type GiftStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 
-export interface GiftOption {
+/** A treat sold by Makoma and redeemable at a partner spot (e.g. a juice bar in Osu). */
+export interface GiftOffer {
   id: string;
+  partnerName: string;
+  area: string; // "Osu", "East Legon"
   label: string; // "Sobolo", "Coffee", "Kelewele"
   emoji: string;
-  amountPesewas: number;
+  pricePesewas: number; // GHS × 100
+}
+
+export type VoucherStatus = 'issued' | 'redeemed' | 'expired';
+
+/** What the recipient holds: a code / QR shown at the partner's counter. */
+export interface Voucher {
+  id: string;
+  code: string; // MK-XXXX-XXXX
+  offer: GiftOffer;
+  fromName: string;
+  status: VoucherStatus;
+  expiresAt: string;
+  redeemedAt?: string;
+}
+
+/** Anti-scam gift lock progress. Source of truth: gift_unlock_status() in the DB. */
+export interface GiftUnlock {
+  unlocked: boolean;
+  messages: number;
+  messagesRequired: number;
+  voiceNotes: number;
+  bothReplied: boolean;
 }
 
 /** Sachet pricing: small, short-duration passes instead of monthly subscriptions. */

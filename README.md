@@ -1,7 +1,7 @@
 # Makoma
 
 Intentional dating, built for Ghana. Intent-first matching, verified profiles, voice notes,
-MoMo appreciation gifts and incognito mode for professionals.
+treats redeemable at partner spots (paid with MoMo) and incognito mode for professionals.
 
 See **[docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md)** for the full product vision and how each
 feature maps to code.
@@ -31,7 +31,8 @@ src/
     (auth)/            welcome, phone OTP
     (onboarding)/      intent → basics → prompts → voice intro → selfie verification
     (tabs)/            discover, matches, profile
-    chat/[matchId]     text, voice notes, MoMo gifts
+    chat/[matchId]     text, voice notes, treats (locked until the chat is real)
+    treats             vouchers you have received (QR codes)
     settings/privacy   incognito sachet passes
   components/          UI primitives + ProfileCard (restyle these with the designs)
   constants/           intents, culturally rooted prompts, Ghana data (schools, languages, gifts, pricing)

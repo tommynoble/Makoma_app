@@ -10,6 +10,7 @@ export default function RootLayout() {
         <StatusBar style="auto" />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="chat/[matchId]" options={{ headerShown: true, title: 'Chat' }} />
+          <Stack.Screen name="treats" options={{ headerShown: true, title: 'My treats' }} />
           <Stack.Screen name="settings/privacy" options={{ headerShown: true, title: 'Privacy' }} />
         </Stack>
       </OnboardingProvider>

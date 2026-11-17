@@ -1,4 +1,4 @@
-import type { DiscoverCard, Profile } from '@/types/domain';
+import type { DiscoverCard, GiftOffer, Profile, Voucher } from '@/types/domain';
 import { computeSharedGround } from './discover/sharedGround';
 
 /** Local stand-in for the signed-in user while the backend isn't configured. */
@@ -75,3 +75,23 @@ export const MOCK_CARDS: DiscoverCard[] = others.map((profile) => ({
   profile,
   shared: computeSharedGround(MOCK_ME, profile),
 }));
+
+/** Placeholder partners (fictional names); mirrors supabase/seed.sql. */
+export const MOCK_GIFT_OFFERS: GiftOffer[] = [
+  { id: 'sobolo', partnerName: 'Partner Juice Bar', area: 'Osu', label: 'Sobolo', emoji: '🥤', pricePesewas: 1000 },
+  { id: 'kelewele', partnerName: 'Partner Chop Bar', area: 'Labone', label: 'Kelewele', emoji: '🍌', pricePesewas: 1500 },
+  { id: 'coffee', partnerName: 'Partner Café', area: 'East Legon', label: 'Coffee', emoji: '☕', pricePesewas: 3000 },
+  { id: 'smoothie', partnerName: 'Partner Juice Bar', area: 'Osu', label: 'Smoothie', emoji: '🍹', pricePesewas: 4000 },
+  { id: 'jollof_2', partnerName: 'Partner Chop Bar', area: 'Labone', label: 'Jollof for two', emoji: '🍛', pricePesewas: 8000 },
+];
+
+export const MOCK_VOUCHERS: Voucher[] = [
+  {
+    id: 'v1',
+    code: 'MK-7KQ2-XP4D',
+    offer: MOCK_GIFT_OFFERS[2],
+    fromName: 'Akosua',
+    status: 'issued',
+    expiresAt: '2026-12-17T00:00:00Z',
+  },
+];

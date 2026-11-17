@@ -1,4 +1,4 @@
-import type { GiftOption, LanguageId, SachetPlan } from '@/types/domain';
+import type { LanguageId, SachetPlan } from '@/types/domain';
 
 export const LANGUAGES: { id: LanguageId; label: string }[] = [
   { id: 'en', label: 'English' },
@@ -49,15 +49,6 @@ export const INDUSTRIES = [
   'Hospitality',
   'Student',
   'Other',
-];
-
-/** MoMo appreciation gifts. Amounts in pesewas (GHS × 100). */
-export const GIFT_OPTIONS: GiftOption[] = [
-  { id: 'sobolo', label: 'Sobolo', emoji: '🥤', amountPesewas: 1000 },
-  { id: 'kelewele', label: 'Kelewele', emoji: '🍌', amountPesewas: 1500 },
-  { id: 'coffee', label: 'Coffee', emoji: '☕', amountPesewas: 3000 },
-  { id: 'smoothie', label: 'Smoothie', emoji: '🍹', amountPesewas: 4000 },
-  { id: 'jollof', label: 'Jollof date', emoji: '🍛', amountPesewas: 8000 },
 ];
 
 /** Sachet pricing: pay small for short access, the way people already buy data bundles. */

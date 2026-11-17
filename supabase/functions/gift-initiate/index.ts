@@ -1,16 +1,9 @@
-// Supabase Edge Function (Deno): start a MoMo appreciation gift via Paystack.
+// Supabase Edge Function (Deno): buy a partner treat for a match, paid with MoMo via Paystack.
+// The sender pays Makoma (a normal merchant sale); the recipient later receives a
+// voucher redeemable at the partner. No money ever moves between users' wallets.
 // Secrets: PAYSTACK_SECRET_KEY (set with `supabase secrets set`).
 // SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY are provided by Supabase.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-
-// Server-side copy of the gift catalogue, so the client can't choose its own price.
-const GIFTS: Record<string, number> = {
-  sobolo: 1000,
-  kelewele: 1500,
-  coffee: 3000,
-  smoothie: 4000,
-  jollof: 8000,
-};
 
 Deno.serve(async (req) => {
   const auth = req.headers.get('Authorization');
@@ -25,9 +18,20 @@ Deno.serve(async (req) => {
   const user = userData.user;
   if (!user) return json({ error: 'unauthorized' }, 401);
 
-  const { matchId, giftId, note } = await req.json();
-  const amount = GIFTS[giftId];
-  if (!amount) return json({ error: 'unknown gift' }, 400);
+  const { matchId, offerId, note } = await req.json();
+
+  // Price comes from the partner catalogue, never from the client.
+  const { data: offer } = await admin
+    .from('partner_offers')
+    .select('id, price_pesewas, is_active')
+    .eq('id', offerId)
+    .single();
+  if (!offer?.is_active) return json({ error: 'unknown treat' }, 400);
+  const amount = offer.price_pesewas;
+
+  // Anti-scam gift lock, enforced server-side (the UI lock is only a hint).
+  const { data: unlock } = await userClient.rpc('gift_unlock_status', { p_match: matchId });
+  if (!unlock?.unlocked) return json({ error: 'gifts_locked', unlock }, 403);
 
   // RLS on `matches` ensures the caller is a participant.
   const { data: match } = await userClient
@@ -45,7 +49,7 @@ Deno.serve(async (req) => {
       match_id: matchId,
       sender_id: user.id,
       recipient_id: recipientId,
-      gift_option_id: giftId,
+      offer_id: offerId,
       amount_pesewas: amount,
       note,
       paystack_reference: reference,

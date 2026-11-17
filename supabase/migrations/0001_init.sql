@@ -107,6 +107,38 @@ create table reports (
 );
 
 -- ---------------------------------------------------------------------------
+-- Partner treats (gifts are vouchers redeemable at partner spots, never cash)
+-- ---------------------------------------------------------------------------
+-- Why vouchers: moving cash from one user's MoMo wallet to another's would make
+-- Makoma a P2P payment/remittance provider under Bank of Ghana rules. Instead
+-- the sender buys a treat from Makoma (an ordinary merchant sale) and the
+-- recipient gets a voucher code/QR redeemable at a partner. Partners are
+-- settled off-platform.
+create table partners (
+  id text primary key,
+  name text not null,
+  area text not null,   -- e.g. 'Osu', 'East Legon'
+  city text not null,
+  is_active boolean not null default true
+);
+
+create table partner_offers (
+  id text primary key,
+  partner_id text not null references partners,
+  label text not null,  -- 'Sobolo', 'Coffee', 'Jollof for two'
+  emoji text not null,
+  price_pesewas int not null check (price_pesewas > 0),
+  is_active boolean not null default true
+);
+
+-- Partner staff accounts that can redeem vouchers at the counter.
+create table partner_staff (
+  user_id uuid references auth.users on delete cascade,
+  partner_id text references partners on delete cascade,
+  primary key (user_id, partner_id)
+);
+
+-- ---------------------------------------------------------------------------
 -- Messages and gifts
 -- ---------------------------------------------------------------------------
 create table gifts (
@@ -114,7 +146,7 @@ create table gifts (
   match_id uuid not null references matches on delete cascade,
   sender_id uuid not null references profiles,
   recipient_id uuid not null references profiles,
-  gift_option_id text not null,
+  offer_id text not null references partner_offers,
   amount_pesewas int not null check (amount_pesewas > 0),
   note text check (char_length(note) <= 140),
   status gift_status not null default 'pending',
@@ -141,6 +173,21 @@ create table messages (
   )
 );
 create index messages_match_idx on messages (match_id, created_at);
+
+create type voucher_status as enum ('issued', 'redeemed', 'expired');
+
+create table vouchers (
+  id uuid primary key default gen_random_uuid(),
+  gift_id uuid not null unique references gifts on delete cascade,
+  recipient_id uuid not null references profiles on delete cascade,
+  offer_id text not null references partner_offers,
+  code text not null unique,  -- e.g. MK-7KQ2-XP4D, also rendered as a QR
+  status voucher_status not null default 'issued',
+  expires_at timestamptz not null default now() + interval '30 days',
+  redeemed_at timestamptz,
+  redeemed_by uuid references auth.users,
+  created_at timestamptz not null default now()
+);
 
 -- ---------------------------------------------------------------------------
 -- Verification and sachet purchases
@@ -223,6 +270,16 @@ alter table gifts enable row level security;
 alter table messages enable row level security;
 alter table verification_requests enable row level security;
 alter table sachet_purchases enable row level security;
+alter table partners enable row level security;
+alter table partner_offers enable row level security;
+alter table partner_staff enable row level security;
+alter table vouchers enable row level security;
+
+create policy "browse active partners" on partners for select to authenticated using (is_active);
+create policy "browse active offers" on partner_offers for select to authenticated using (is_active);
+create policy "staff see own memberships" on partner_staff for select using (user_id = auth.uid());
+-- Only the recipient ever sees a voucher code. Senders see the gift, not the code.
+create policy "recipient reads own vouchers" on vouchers for select using (recipient_id = auth.uid());
 
 create policy "view visible profiles" on profiles for select using (can_view_profile(auth.uid(), id));
 create policy "insert own profile" on profiles for insert with check (id = auth.uid());
@@ -361,6 +418,88 @@ create or replace function discover_feed(
     )
   ) order by r.score desc), '[]'::jsonb)
   from ranked r;
+$$;
+
+-- Gift lock (anti-scam). Treats unlock only once a conversation is real:
+--   5+ messages exchanged with BOTH people having replied, OR a voice note sent.
+-- Mirrored in src/features/gifts/unlock.ts for the progress UI; this is the source of truth.
+-- There is deliberately no way to *request* a gift anywhere in the product.
+create or replace function gift_unlock_status(p_match uuid) returns jsonb
+language sql stable security definer set search_path = public as $$
+  with s as (
+    select count(*) filter (where kind in ('text', 'voice')) as msgs,
+           count(*) filter (where kind = 'voice') as voice,
+           count(distinct sender_id) filter (where kind in ('text', 'voice')) as senders
+    from messages where match_id = p_match
+  )
+  select case when is_match_participant(p_match) then jsonb_build_object(
+    'messages', s.msgs,
+    'messagesRequired', 5,
+    'voiceNotes', s.voice,
+    'bothReplied', s.senders >= 2,
+    'unlocked', (s.msgs >= 5 and s.senders >= 2) or s.voice >= 1
+  ) end
+  from s;
+$$;
+
+-- Issue the voucher for a paid gift and post the gift message into the chat.
+-- Called only by the Paystack webhook (service role). Idempotent per gift.
+create or replace function issue_voucher_for_gift(p_gift uuid) returns uuid
+language plpgsql security definer set search_path = public as $$
+declare
+  g gifts%rowtype;
+  v_id uuid;
+  v_code text;
+begin
+  select * into g from gifts where id = p_gift and status = 'paid';
+  if not found then raise exception 'gift not paid'; end if;
+
+  select id into v_id from vouchers where gift_id = p_gift;
+  if v_id is not null then return v_id; end if;
+
+  loop
+    -- 8 chars from a 32-char alphabet without look-alikes (no 0/O, 1/I); 256 % 32 = 0 so unbiased.
+    select 'MK-' || substr(c, 1, 4) || '-' || substr(c, 5, 4) into v_code from (
+      select string_agg(substr('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', get_byte(b, i) % 32 + 1, 1), '' order by i) as c
+      from (select gen_random_bytes(8) as b) r, generate_series(0, 7) i
+    ) x;
+    exit when not exists (select 1 from vouchers where code = v_code);
+  end loop;
+
+  insert into vouchers (gift_id, recipient_id, offer_id, code)
+  values (g.id, g.recipient_id, g.offer_id, v_code)
+  returning id into v_id;
+
+  insert into messages (match_id, sender_id, kind, gift_id)
+  values (g.match_id, g.sender_id, 'gift', g.id);
+
+  return v_id;
+end;
+$$;
+revoke execute on function issue_voucher_for_gift(uuid) from public, anon, authenticated;
+
+-- Partner staff redeem a voucher at the counter by scanning the QR or typing the code.
+create or replace function redeem_voucher(p_code text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  v vouchers%rowtype;
+  o partner_offers%rowtype;
+begin
+  select * into v from vouchers where code = upper(trim(p_code)) for update;
+  if not found then raise exception 'voucher not found'; end if;
+  select * into o from partner_offers where id = v.offer_id;
+  if not exists (select 1 from partner_staff where user_id = auth.uid() and partner_id = o.partner_id) then
+    raise exception 'voucher not valid at this partner';
+  end if;
+  if v.status = 'redeemed' then raise exception 'voucher already redeemed'; end if;
+  if v.status = 'expired' or v.expires_at < now() then
+    update vouchers set status = 'expired' where id = v.id;
+    raise exception 'voucher expired';
+  end if;
+
+  update vouchers set status = 'redeemed', redeemed_at = now(), redeemed_by = auth.uid() where id = v.id;
+  return jsonb_build_object('offer', o.label, 'emoji', o.emoji, 'redeemedAt', now());
+end;
 $$;
 
 -- Visibility: 'public' always allowed; 'incognito' requires an active sachet pass.

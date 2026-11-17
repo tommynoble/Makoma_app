@@ -48,15 +48,37 @@ vouched for by friends, family, church or school.
 | Phone-number sign-in | SIM registration in Ghana makes throwaway accounts harder | `src/app/(auth)/phone.tsx` |
 | Report & block | Reasons include `scam` and `asking_for_money`; blocks hide both sides everywhere | `reports`, `blocks`, `is_blocked_between()` |
 
-## 4. MoMo appreciation (micro-gifts)
+## 4. Appreciation through partner treats (never cash)
 
 **Insight:** Gifts and small acts of generosity are a familiar sign of serious interest.
 
+**Constraints (senior dev review):**
+- **Bank of Ghana:** moving cash from User A's MoMo wallet to User B's would make Makoma a
+  P2P payment/remittance provider, which needs a licence. So **users never send each other money.**
+  The sender buys a treat *from Makoma* (an ordinary merchant sale via Paystack) and the recipient
+  gets a **voucher (QR + code) redeemable at a partner spot** (juice bar in Osu, café in East Legon…).
+  Partners are settled off-platform.
+- **Anti-scam:** instant gifting on the first message attracts scammers. The gift icon is
+  **locked with a progress indicator** until the conversation is real, and there is **no
+  "Request a gift" action anywhere** in the product.
+
 | Feature | Detail | Code |
 |---|---|---|
-| Gift tray in chat | Sobolo GH₵10 · Kelewele GH₵15 · Coffee GH₵30 · Smoothie GH₵40 · Jollof date GH₵80 | `GIFT_OPTIONS` in `src/constants/ghana.ts` |
-| Paystack MoMo checkout | Edge function sets the price server-side, creates a pending gift, opens Paystack (mobile money only) | `supabase/functions/gift-initiate` |
-| Gift message on payment | Webhook verifies the HMAC signature, marks paid once, posts a `gift` message. Clients cannot forge gift messages | `supabase/functions/paystack-webhook`, smoke test #8 |
+| Partner catalogue | Partners + offers in the DB (Sobolo GH₵10, Kelewele GH₵15, Coffee GH₵30, Smoothie GH₵40, Jollof for two GH₵80). Placeholder partners in seed data | `partners`, `partner_offers`, `supabase/seed.sql` |
+| Gift lock | Unlocks after **5 messages with both people having replied**, or **1 voice note**. Locked icon shows a progress bar; tapping explains what's left. Enforced server-side | `gift_unlock_status()`, `src/features/gifts/unlock.ts`, `src/components/GiftButton.tsx`, smoke tests #11–14 |
+| Buying a treat | Edge function re-checks the lock, takes the price from the catalogue, opens Paystack (mobile money) | `supabase/functions/gift-initiate` |
+| Voucher issued on payment | Webhook verifies the HMAC signature, marks the gift paid once, issues an `MK-XXXX-XXXX` voucher (30-day expiry) and posts a "sent a treat" message. Only the **recipient** can see the code | `issue_voucher_for_gift()`, `paystack-webhook`, smoke tests #15–17 |
+| My treats | Recipient's wallet of vouchers with QR codes | `src/app/treats.tsx` |
+| Partner redemption | Partner staff scan or type the code; only valid at that partner, once, before expiry | `redeem_voucher()`, `partner_staff`, smoke tests #18–20 |
+| Safety copy | Chat header: "Makoma will never ask you for money, and no one should ask you to send gifts" | `src/app/chat/[matchId].tsx` |
+
+**Design notes for the chat UI:**
+- Gift icon has two states: **locked** (🔒 + thin progress bar, muted) and **unlocked** (🎁).
+- Locked tap → inline hint, e.g. *"Treats unlock after 3 more messages, or one voice note"* /
+  *"Treats unlock once they reply"*.
+- Treat tray shows the item, partner name and area, and price. Copy frames it as a voucher, not money.
+- Gift message bubble: *"☕ Sent a treat: Coffee"*. No amounts shown to the recipient in chat.
+- Never design a "request", "ask for" or "wishlist" gift affordance.
 
 ## 5. Privacy for professionals
 
@@ -82,18 +104,19 @@ lawyers and executives off dating apps.
 
 1. **MVP** (this scaffold): auth, onboarding, Discover, matching, text and voice chat, verification submission.
 2. **Designs applied:** swap tokens, restyle primitives and screens, photos upload and gallery.
-3. **Payments live:** gifts and sachet purchases end to end in Paystack test mode, then live.
-4. **Trust ops:** moderation dashboard for verification and reports; automated face-match.
+3. **Payments live:** treats and sachet purchases end to end in Paystack test mode, then live; sign first partners in Osu / East Legon / Labone.
+4. **Trust ops:** moderation dashboard for verification and reports; automated face-match; partner redemption app/web page (calls `redeem_voucher`).
 5. **Growth:** referral/"vouch for a friend", events (Detty December mixers), church/alumni communities.
 
 ## Open questions
 
-- **Gift payouts.** Paying recipients out to their own MoMo wallet may count as
-  money transmission under Bank of Ghana rules. Options: Paystack Transfers to a verified
-  recipient, an in-app credit balance redeemable with partner vendors (coffee shops, chop
-  bars), or gifts as non-cash tokens. **Get legal advice before launch.**
-- **Scam risk from gifting.** "Asking for money" is a classic scam pattern. Consider
-  capping gift size, allowing gifts only after N days or N messages, and never allowing requests for gifts.
+- **Voucher model sign-off.** Selling treats as a merchant is far lower risk than P2P transfers, but
+  prepaid vouchers can still touch e-money / stored-value rules. Confirm with a lawyer, and keep
+  vouchers single-use, partner-specific, non-refundable to cash and time-limited (as built).
+- **Partner settlement.** How and when partners are paid (weekly invoice of redeemed vouchers?),
+  margin per treat, and what happens to expired vouchers' revenue.
+- **Gift lock thresholds.** 5 messages / 1 voice note is a starting point; tune with real data.
+  (It's one constant in SQL plus `GIFT_UNLOCK_MESSAGES` in the app.)
 - **SMS provider** for OTP in Ghana (Twilio, Hubtel, Arkesel) and its deliverability and cost.
 - **Data protection.** Ghana Data Protection Act 2012 (Act 843): register with the Data
   Protection Commission; selfie retention policy.

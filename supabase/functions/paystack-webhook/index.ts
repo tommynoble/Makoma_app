@@ -30,18 +30,10 @@ Deno.serve(async (req) => {
       .eq('paystack_reference', reference)
       .eq('status', 'pending')
       .eq('amount_pesewas', amount)
-      .select('id, match_id, sender_id')
+      .select('id')
       .maybeSingle();
-    if (gift) {
-      await admin.from('messages').insert({
-        match_id: gift.match_id,
-        sender_id: gift.sender_id,
-        kind: 'gift',
-        gift_id: gift.id,
-      });
-      // TODO: pay the recipient out to their MoMo wallet (Paystack Transfers),
-      // or credit an in-app balance. See docs/PRODUCT_SPEC.md "Open questions".
-    }
+    // Issues the voucher (recipient only sees the code) and posts the gift message.
+    if (gift) await admin.rpc('issue_voucher_for_gift', { p_gift: gift.id });
   } else if (reference.startsWith('sachet_')) {
     const { data: purchase } = await admin
       .from('sachet_purchases')

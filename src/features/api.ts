@@ -6,8 +6,8 @@
  */
 import { File } from 'expo-file-system';
 import { isBackendConfigured, supabase } from '@/lib/supabase';
-import type { DiscoverCard, DiscoverFilters, Message, Visibility } from '@/types/domain';
-import { MOCK_CARDS } from './mockData';
+import type { DiscoverCard, DiscoverFilters, GiftOffer, GiftUnlock, Message, Visibility, Voucher } from '@/types/domain';
+import { MOCK_CARDS, MOCK_GIFT_OFFERS, MOCK_VOUCHERS } from './mockData';
 
 // ---- Discover -------------------------------------------------------------
 
@@ -87,20 +87,76 @@ export function subscribeToMessages(matchId: string, onMessage: (m: Message) => 
   };
 }
 
-// ---- MoMo gifts -----------------------------------------------------------
+// ---- Treats (partner vouchers) -------------------------------------------
+// Gifts are treats bought from Makoma and redeemed at partner spots. Cash is
+// never sent between users (Bank of Ghana P2P payment rules).
+
+export async function fetchGiftOffers(): Promise<GiftOffer[]> {
+  if (!isBackendConfigured) return MOCK_GIFT_OFFERS;
+  const { data, error } = await supabase
+    .from('partner_offers')
+    .select('id, label, emoji, price_pesewas, partners(name, area)')
+    .eq('is_active', true)
+    .order('price_pesewas');
+  if (error) throw error;
+  return (data ?? []).map((o: any) => ({
+    id: o.id,
+    label: o.label,
+    emoji: o.emoji,
+    pricePesewas: o.price_pesewas,
+    partnerName: o.partners?.name ?? '',
+    area: o.partners?.area ?? '',
+  }));
+}
+
+/** Server-side gift lock status for a match (null if not a participant). */
+export async function fetchGiftUnlock(matchId: string): Promise<GiftUnlock | null> {
+  const { data, error } = await supabase.rpc('gift_unlock_status', { p_match: matchId });
+  if (error) throw error;
+  return data as GiftUnlock | null;
+}
 
 /**
- * Starts a MoMo appreciation gift. The edge function creates a pending gift
- * row and a Paystack transaction and returns a checkout URL; Paystack's
- * webhook marks the gift paid and posts the gift message into the chat.
+ * Buys a treat with MoMo. The edge function re-checks the gift lock, takes the
+ * price from the partner catalogue, and returns a Paystack checkout URL. Once
+ * paid, the webhook issues the recipient a voucher and posts the gift message.
  */
-export async function startGift(matchId: string, giftId: string, note?: string) {
+export async function startGift(matchId: string, offerId: string, note?: string) {
   const { data, error } = await supabase.functions.invoke<{ authorizationUrl: string; reference: string }>(
     'gift-initiate',
-    { body: { matchId, giftId, note } },
+    { body: { matchId, offerId, note } },
   );
   if (error) throw error;
   return data!;
+}
+
+/** Treats the signed-in user has received. Only the recipient can see codes. */
+export async function fetchMyVouchers(): Promise<Voucher[]> {
+  if (!isBackendConfigured) return MOCK_VOUCHERS;
+  const { data, error } = await supabase
+    .from('vouchers')
+    .select(
+      'id, code, status, expires_at, redeemed_at, partner_offers(id, label, emoji, price_pesewas, partners(name, area)), gifts(sender_id)',
+    )
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  // TODO: resolve sender first names via a view/RPC once profile visibility for matches is finalised.
+  return (data ?? []).map((v: any) => ({
+    id: v.id,
+    code: v.code,
+    status: v.status,
+    expiresAt: v.expires_at,
+    redeemedAt: v.redeemed_at ?? undefined,
+    fromName: 'Your match',
+    offer: {
+      id: v.partner_offers.id,
+      label: v.partner_offers.label,
+      emoji: v.partner_offers.emoji,
+      pricePesewas: v.partner_offers.price_pesewas,
+      partnerName: v.partner_offers.partners?.name ?? '',
+      area: v.partner_offers.partners?.area ?? '',
+    },
+  }));
 }
 
 // ---- Privacy & verification -----------------------------------------------
