@@ -25,6 +25,15 @@ export default function Voice() {
   const player = useAudioPlayer(clip?.uri ?? null);
   const playback = useAudioPlayerStatus(player);
 
+  const start = async () => {
+    setElapsed(0);
+    update({ voiceIntro: undefined });
+    await rec.start();
+  };
+  const stop = async () => {
+    const result = await rec.stop();
+    if (result) update({ voiceIntro: result, voicePromptText: SUGGESTIONS[suggestion] });
+  };
   // Count up while recording and stop automatically at the limit.
   useEffect(() => {
     if (!rec.isRecording) return;
@@ -38,15 +47,6 @@ export default function Voice() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rec.isRecording]);
 
-  const start = async () => {
-    setElapsed(0);
-    update({ voiceIntro: undefined });
-    await rec.start();
-  };
-  const stop = async () => {
-    const result = await rec.stop();
-    if (result) update({ voiceIntro: result, voicePromptText: SUGGESTIONS[suggestion] });
-  };
   const togglePlay = () => {
     if (playback.playing) return player.pause();
     if (playback.didJustFinish || playback.currentTime >= playback.duration) player.seekTo(0);

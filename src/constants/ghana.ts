@@ -73,7 +73,8 @@ export const SACHET_PLANS: SachetPlan[] = [
   { id: 'see_likes_24h', feature: 'see_likes', label: 'See who likes you, 1 day', durationHours: 24, pricePesewas: 400 },
 ];
 
-export const formatCedis = (pesewas: number) => `GH₵${(pesewas / 100).toFixed(2)}`;
+/** GH₵30 for whole amounts, GH₵12.50 otherwise. */
+export const formatCedis = (pesewas: number) => `GH₵${(pesewas / 100).toFixed(pesewas % 100 ? 2 : 0)}`;
 
 /** Ghana mobile numbers: 0XX XXX XXXX or +233 XX XXX XXXX. Returns E.164 or null. */
 export function normalizeGhanaPhone(input: string): string | null {

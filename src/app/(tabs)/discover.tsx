@@ -22,19 +22,23 @@ export default function Discover() {
   const insets = useSafeAreaInsets();
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const [cards, setCards] = useState<DiscoverCard[]>([]);
-  const [load, setLoad] = useState<Load>('loading');
+  const [status, setStatus] = useState<Load>('loading');
   const [toast, setToast] = useState<string | null>(null);
 
-  const refresh = () => {
-    setLoad('loading');
+  const load = () =>
     fetchDiscover(FILTERS)
       .then((c) => {
         setCards(c);
-        setLoad('ready');
+        setStatus('ready');
       })
-      .catch(() => setLoad('error'));
+      .catch(() => setStatus('error'));
+  const refresh = () => {
+    setStatus('loading');
+    load();
   };
-  useEffect(refresh, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   useEffect(() => {
     if (!toast) return;
@@ -75,11 +79,11 @@ export default function Discover() {
         </View>
       </View>
 
-      {load === 'loading' ? (
+      {status === 'loading' ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <Text color="tertiary">Finding people who want what you want…</Text>
         </View>
-      ) : load === 'error' ? (
+      ) : status === 'error' ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl }}>
           <Text variant="headlineMd" center>
             We couldn’t load profiles.

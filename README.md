@@ -6,8 +6,11 @@ treats redeemable at partner spots (paid with MoMo) and incognito mode for profe
 See **[docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md)** for the full product vision and how each
 feature maps to code.
 
-> **Status:** functional scaffold. Screens use placeholder styling until the designs land.
-> All visual tokens live in `src/theme/tokens.ts` and primitives in `src/components/ui.tsx`.
+> **Status:** first working prototype, built from the Stitch designs ("Warm Editorial Trust").
+> Runs on demo data until Supabase keys are added. Previews: `docs/prototype-screens-1.png`, `-2.png`.
+>
+> Design system: tokens in `src/theme/` (copied from Stitch), components in `src/components/`.
+> Screens only use components and tokens; never hardcode colours, sizes or fonts in a screen.
 
 ## Getting started
 
@@ -17,7 +20,8 @@ cp .env.example .env.local   # optional: without it the app runs on mock data
 npx expo start
 ```
 
-Camera and audio are native modules, so use a development build rather than Expo Go:
+Open it in **Expo Go** on your phone (scan the QR code) or press `w` for the web preview.
+For store builds, camera and audio permissions need a development build:
 `npx eas-cli@latest build --profile development` (or `npx expo run:android` locally).
 
 > If `npx expo install` fails with a peer-dependency (ERESOLVE) error on `react-dom`, install
@@ -28,17 +32,18 @@ Camera and audio are native modules, so use a development build rather than Expo
 ```
 src/
   app/                 Expo Router screens
-    (auth)/            welcome, phone OTP
-    (onboarding)/      intent → basics → prompts → voice intro → selfie verification
-    (tabs)/            discover, matches, profile
+    (auth)/            phone sign-in (SMS code)
+    (onboarding)/      pledge → intentions → about → selfie → prompts → voice
+    (tabs)/            discover, matches, likes, profile
+    reply              like + comment sheet (native form sheet)
     chat/[matchId]     text, voice notes, treats (locked until the chat is real)
     treats             vouchers you have received (QR codes)
     settings/privacy   incognito sachet passes
-  components/          UI primitives + ProfileCard (restyle these with the designs)
+  components/          design-system kit (Text, Button, Card, Pill, Icon, Screen…) + profile sections
   constants/           intents, culturally rooted prompts, Ghana data (schools, languages, sachet pricing)
   features/            data access (api.ts), voice recorder, shared-ground ranking, onboarding state
   lib/supabase.ts      Supabase client
-  theme/tokens.ts      placeholder design tokens
+  theme/               colours, type ramp, spacing, radii, shadows (from Stitch)
   types/domain.ts      domain model
 supabase/
   migrations/          schema, RLS, discover/match RPCs, storage policies

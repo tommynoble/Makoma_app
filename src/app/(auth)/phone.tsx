@@ -93,7 +93,9 @@ export default function Phone() {
               />
             ) : (
               <>
-                <Text variant="labelLg">🇬🇭 +233</Text>
+                <Text variant="labelLg" numberOfLines={1} style={{ flexShrink: 0 }}>
+                  🇬🇭 +233
+                </Text>
                 <View style={{ width: 1, height: 24, backgroundColor: colors.outlineVariant }} />
                 <TextInput
                   accessibilityLabel="Phone number"
