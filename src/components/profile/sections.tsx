@@ -57,7 +57,7 @@ export function HeroPhotoCard({ profile, onLike }: { profile: Profile; onLike: (
             </Text>
           ) : null}
         </View>
-        <IconButton icon="favorite" label={`Like ${profile.firstName}'s photo`} size={48} iconSize={24} color="onSurfaceVariant" {...glassButton} onPress={onLike} style={{ position: 'absolute', right: 16, bottom: 16 }} />
+        <IconButton icon="favorite" label={`Like ${profile.firstName}'s photo`} size={48} iconSize={24} color="onSurfaceVariant" {...glassButton} filled={false} onPress={onLike} style={{ position: 'absolute', right: 16, bottom: 16 }} />
       </View>
       <View style={{ padding: spacing.md, flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
         {pills.map((p) => (
@@ -89,7 +89,7 @@ export function SharedGroundCard({ profile, shared }: { profile: Profile; shared
   return (
     <Card rounded="xl" padding="lg" shadow="md" bg="surfaceContainerLow" style={{ gap: spacing.md }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-        <Icon name="handshake" size={20} color="primary" />
+        <Icon name="handshake" size={20} color="primary" filled={false} />
         <Text variant="labelLg" uppercase>
           You have in common
         </Text>
@@ -118,7 +118,7 @@ export function VoicePromptCard({ profile, voice, onLike }: { profile: Profile; 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
           {/* TODO: wire to expo-audio once profiles carry real recordings. */}
           <IconButton icon="play_arrow" label={`Play ${profile.firstName}'s voice note`} filled size={48} iconSize={26} bg="secondary" color="onSecondary" shadow={shadows.md} />
-          <Waveform seed={profile.id} progress={0} count={22} playedColor="primary" />
+          <Waveform seed={profile.id} progress={0.35} count={16} height={32} barWidth={6} playedColor="primary" />
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <Text variant="labelSm" color="tertiary">
@@ -143,7 +143,7 @@ export function VoicePromptCard({ profile, voice, onLike }: { profile: Profile; 
         <Text variant="labelSm" color="tertiary" uppercase>
           Tap heart to reply to voice
         </Text>
-        <IconButton icon="favorite" label="Like and reply to this voice prompt" size={44} iconSize={20} bg="surfaceContainer" shadow={shadows.sm} onPress={onLike} />
+        <IconButton icon="favorite" label="Like and reply to this voice prompt" size={44} iconSize={20} bg="surfaceContainer" shadow={shadows.sm} filled={false} onPress={onLike} />
       </View>
     </Card>
   );
@@ -163,7 +163,7 @@ export function TextPromptCard({ prompt, onLike }: { prompt: ProfilePrompt; onLi
         </Text>
       </View>
       <View style={{ alignItems: 'flex-end' }}>
-        <IconButton icon="favorite" label="Like and reply to this answer" size={44} iconSize={20} bg="surfaceContainer" color="onSurfaceVariant" shadow={shadows.sm} onPress={onLike} />
+        <IconButton icon="favorite" label="Like and reply to this answer" size={44} iconSize={20} bg="surfaceContainer" color="onSurfaceVariant" shadow={shadows.sm} filled={false} onPress={onLike} />
       </View>
     </Card>
   );
@@ -174,7 +174,7 @@ export function PhotoCard({ photo, firstName, onLike }: { photo: Photo; firstNam
     <Card rounded="xl" padding="none" shadow="md" style={{ overflow: 'hidden' }}>
       <View style={{ aspectRatio: 4 / 3, backgroundColor: colors.surfaceDim }}>
         <Image source={photo.source} contentFit="cover" style={{ flex: 1 }} accessibilityLabel={photo.caption ?? `Photo of ${firstName}`} transition={200} />
-        <IconButton icon="favorite" label="Like this photo" size={48} iconSize={24} color="onSurfaceVariant" {...glassButton} onPress={onLike} style={{ position: 'absolute', right: 16, bottom: 16 }} />
+        <IconButton icon="favorite" label="Like this photo" size={48} iconSize={24} color="onSurfaceVariant" {...glassButton} filled={false} onPress={onLike} style={{ position: 'absolute', right: 16, bottom: 16 }} />
       </View>
       {photo.caption ? (
         <View style={{ padding: spacing.md }}>

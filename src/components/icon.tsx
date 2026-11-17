@@ -5,15 +5,16 @@ import { glyphs, type IconName } from './icon-glyphs';
 export type { IconName };
 
 /**
- * Material Symbols icon, the same set the designs use, on every platform.
- * `filled` switches to the filled style. Decorative by default: put the
- * accessibility label on the pressable that wraps it.
+ * Material Symbols Rounded icon (the Superdesign style), on every platform.
+ * Filled by default; pass `filled={false}` for the outlined style (used for
+ * heart buttons and inactive tabs). Decorative: put the accessibility label
+ * on the pressable that wraps it.
  */
 export function Icon({
   name,
   size = 24,
   color = 'onSurface',
-  filled,
+  filled = true,
   style,
 }: {
   name: IconName;
@@ -28,7 +29,7 @@ export function Icon({
       allowFontScaling={false}
       style={[
         {
-          fontFamily: filled ? 'MaterialSymbols_400Regular_Filled' : 'MaterialSymbols_400Regular',
+          fontFamily: filled ? 'MaterialSymbolsRounded_400Regular_Filled' : 'MaterialSymbolsRounded_400Regular',
           fontSize: size,
           lineHeight: size,
           width: size,

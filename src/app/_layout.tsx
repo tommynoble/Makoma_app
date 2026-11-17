@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { MaterialSymbols_400Regular } from '@expo-google-fonts/material-symbols/400Regular';
-import { MaterialSymbols_400Regular_Filled } from '@expo-google-fonts/material-symbols/400Regular_Filled';
+import { MaterialSymbolsRounded_400Regular } from '@expo-google-fonts/material-symbols-rounded/400Regular';
+import { MaterialSymbolsRounded_400Regular_Filled } from '@expo-google-fonts/material-symbols-rounded/400Regular_Filled';
 import { Newsreader_400Regular } from '@expo-google-fonts/newsreader/400Regular';
 import { Newsreader_400Regular_Italic } from '@expo-google-fonts/newsreader/400Regular_Italic';
 import { Newsreader_500Medium } from '@expo-google-fonts/newsreader/500Medium';
@@ -31,8 +31,8 @@ export default function RootLayout() {
     PlusJakartaSans_500Medium,
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
-    MaterialSymbols_400Regular,
-    MaterialSymbols_400Regular_Filled,
+    MaterialSymbolsRounded_400Regular,
+    MaterialSymbolsRounded_400Regular_Filled,
   });
 
   useEffect(() => {

@@ -7,7 +7,7 @@ import { Button, Icon, IconButton, Pill, Text, Wordmark } from '@/components';
 import { HeroPhotoCard, PhotoCard, SharedGroundCard, TextPromptCard, ValuesCard, VoicePromptCard } from '@/components/profile/sections';
 import { fetchDiscover, likeProfile, passProfile } from '@/features/api';
 import { MOCK_ME } from '@/features/mock-data';
-import { colors, maxContentWidth, shadows, spacing } from '@/theme';
+import { alpha, colors, maxContentWidth, shadows, spacing } from '@/theme';
 import type { DiscoverCard, DiscoverFilters } from '@/types/domain';
 
 const FILTERS: DiscoverFilters = { intents: ['marriage', 'serious', 'friendship_networking'], minAge: 21, maxAge: 45, verifiedOnly: false, languages: [], institutionIds: [] };
@@ -120,7 +120,7 @@ export default function Discover() {
                     </Text>
                   ) : null}
                 </View>
-                <Pill label={`${cards.length} to meet`} dot="primary" color="primary" uppercase />
+                <Pill label={`${cards.length} to meet`} dot="primary" color="primary" bg={alpha(colors.primaryContainer, 0.2)} uppercase />
               </View>
 
               <HeroPhotoCard profile={current.profile} onLike={() => reply({ kind: 'photo' })} />

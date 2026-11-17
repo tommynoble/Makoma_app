@@ -12,7 +12,12 @@ export const ONBOARDING_STEPS = 6;
 /** "Makoma" wordmark in the editorial serif, as in the Discover header. */
 export function Wordmark({ size = 'lg' }: { size?: 'lg' | 'md' }) {
   return (
-    <Text variant={size === 'lg' ? 'headlineLg' : 'headlineMd'} color="primary" accessibilityRole="header">
+    <Text
+      variant={size === 'lg' ? 'headlineLg' : 'headlineMd'}
+      color="primary"
+      accessibilityRole="header"
+      style={size === 'lg' ? { fontSize: 30, lineHeight: 36, letterSpacing: -0.75 } : undefined}
+    >
       Makoma
     </Text>
   );

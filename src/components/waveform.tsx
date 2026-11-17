@@ -22,6 +22,7 @@ export function Waveform({
   height = 40,
   playedColor = 'primaryContainer',
   restColor = 'outlineVariant',
+  barWidth = 4,
 }: {
   seed: string;
   progress?: number;
@@ -29,6 +30,7 @@ export function Waveform({
   height?: number;
   playedColor?: ColorName;
   restColor?: ColorName;
+  barWidth?: number;
 }) {
   const played = Math.round(progress * count);
   return (
@@ -36,7 +38,7 @@ export function Waveform({
       {bars(seed, count).map((b, i) => (
         <View
           key={i}
-          style={{ width: 4, borderRadius: 2, height: Math.max(4, b * height), backgroundColor: colors[i < played ? playedColor : restColor] }}
+          style={{ width: barWidth, borderRadius: barWidth / 2, height: Math.max(4, b * height), backgroundColor: colors[i < played ? playedColor : restColor] }}
         />
       ))}
     </View>
