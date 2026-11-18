@@ -1,7 +1,7 @@
 import { createContext, use, type ReactNode } from 'react';
 import type { VoiceClip } from '@/features/voice/use-voice-recorder';
 import { usePersistentState } from '@/lib/persist';
-import type { IntentId, LanguageId } from '@/types/domain';
+import type { Gender, IntentId, LanguageId } from '@/types/domain';
 
 /** The signed-in user's own profile (demo: saved on the device). */
 export interface OnboardingDraft {
@@ -13,6 +13,10 @@ export interface OnboardingDraft {
   neighborhood: string;
   hideExactDistance: boolean;
   firstName?: string;
+  /** YYYY-MM-DD. Must be 18+. */
+  birthDate?: string;
+  gender?: Gender;
+  interestedIn: Gender[];
   occupation?: string;
   lifeGoals?: string;
   institutionIds: string[];
@@ -27,6 +31,10 @@ export interface OnboardingDraft {
   voicePromptText?: string;
   voiceIntro?: VoiceClip;
   selfieSubmitted: boolean;
+  /** Selfie taken during onboarding, sent once the account exists on the server. */
+  pendingSelfie?: { uri: string; pose: string };
+  /** Backend bookkeeping: what is already uploaded, so saves only send changes. */
+  remote?: { photoPaths: Record<string, string>; voiceUri?: string; voicePath?: string; created?: boolean };
 }
 
 export const ME_KEY = 'makoma.me.v1';
@@ -39,6 +47,7 @@ const initial: OnboardingDraft = {
   hideExactDistance: true,
   institutionIds: [],
   languages: ['en'],
+  interestedIn: [],
   photos: [],
   prompts: {},
   selfieSubmitted: false,

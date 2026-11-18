@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { ScrollView, View } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -6,7 +6,6 @@ import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Card, Enter, Icon, IconButton, Pill, PressableScale, Skeleton, Text, Wordmark } from '@/components';
 import { HeroPhotoCard, PhotoCard, SharedGroundCard, TextPromptCard, ValuesCard, VoicePromptCard } from '@/components/profile/sections';
-import { buildDeck } from '@/features/discover/deck';
 import { useMyProfile } from '@/features/me';
 import { toCard } from '@/features/mock-data';
 import { profileCompletion } from '@/features/onboarding/completion';
@@ -39,7 +38,7 @@ export default function Discover() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  const deck = useMemo(() => buildDeck(social.state), [social.state]);
+  const deck = social.deck;
   const current = deck[0] ? toCard(deck[0], me) : undefined;
   const completion = profileCompletion({ ...draft, firstName: me.firstName, intent: me.intent }).percent;
   const filtersOn = JSON.stringify(social.state.filters) !== JSON.stringify(DEFAULT_FILTERS);
@@ -55,13 +54,18 @@ export default function Discover() {
   const onPass = () => {
     if (!current) return;
     haptic.light();
-    social.pass(current.profile.id);
+    social.pass(current.profile.id).catch(() => setToast('Couldn’t save that. Check your connection.'));
     advance(`Passed on ${current.profile.firstName}`);
   };
-  const onLike = (rose = false) => {
+  const onLike = async (rose = false) => {
     if (!current) return;
     const name = current.profile.firstName;
-    const matchId = social.like(current.profile.id, { rose });
+    let matchId: string | null;
+    try {
+      matchId = await social.like(current.profile.id, { rose });
+    } catch {
+      return setToast('Couldn’t send that like. Check your connection.');
+    }
     if (matchId) haptic.success();
     else if (rose) haptic.medium();
     else haptic.light();
@@ -88,7 +92,7 @@ export default function Discover() {
         </View>
       </View>
 
-      {warming ? (
+      {warming || (social.loading && !current) ? (
         <View accessibilityLabel="Loading profiles" style={{ flex: 1, paddingTop: spacing.md, paddingHorizontal: spacing.margin, gap: spacing.lg, width: '100%', maxWidth: maxContentWidth, alignSelf: 'center' }}>
           <Skeleton height={20} width="45%" />
           <Skeleton height={440} rounded="xl" />

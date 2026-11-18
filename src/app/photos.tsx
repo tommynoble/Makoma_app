@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconButton, Text } from '@/components';
 import { ageOf } from '@/components/profile/sections';
 import { useMyProfile } from '@/features/me';
-import { mockProfileById } from '@/features/mock-data';
+import { useSocial } from '@/features/social/social-store';
 import { CSS_EASE_OUT, durations } from '@/lib/motion';
 import { colors, fonts, radius, spacing } from '@/theme';
 
@@ -22,7 +22,8 @@ export default function Photos() {
   const { profileId, index: start } = useLocalSearchParams<{ profileId: string; index?: string }>();
   // TODO: load from the backend when configured.
   const me = useMyProfile();
-  const profile = profileId === 'me' ? me : mockProfileById(profileId);
+  const social = useSocial();
+  const profile = profileId === 'me' ? me : social.profile(profileId);
   const photos = profile?.photos ?? [];
   const [index, setIndex] = useState(Math.min(Number(start ?? 0) || 0, Math.max(photos.length - 1, 0)));
 

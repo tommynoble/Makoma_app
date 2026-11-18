@@ -4,12 +4,15 @@ The prototype works end to end on demo data (profile, likes, matches, chat, trea
 all saved on the device). The next steps turn it into a real product, in priority order.
 
 ## 1. Connect the backend (Supabase): demo → real
-The schema, row-level security and smoke tests already exist in `supabase/`.
+The schema, row-level security and smoke tests already exist in `supabase/`, and the app code is
+written (`src/features/backend/`). What's left is configuration: see `docs/SUPABASE_SETUP.md`.
 - [ ] Create a Supabase project and add the URL + anon key (`.env.local`, EAS environment)
 - [ ] Phone sign-in with a real SMS provider that covers Ghana (Twilio, Hubtel or Arkesel)
-- [ ] Upload photos and voice notes to Supabase Storage
-- [ ] Replace the local social store with the API (`src/features/api.ts`): discover, likes, matches
-- [ ] Realtime chat between real accounts
+- [x] Upload photos and voice notes to Supabase Storage (code ready)
+- [x] Discover, likes, matches from the API with a demo fallback (code ready)
+- [x] Realtime chat between real accounts (code ready)
+- [x] Birthday (18+), gender and "show me" collected in onboarding
+- [ ] Run `scripts/connect-supabase.sh` once the project exists
 
 ## 2. Safety basics (needed before any launch)
 - [ ] Report and block from any profile or chat

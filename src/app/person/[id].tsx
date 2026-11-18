@@ -5,7 +5,7 @@ import { Button, Card, IconButton, Pill, Text } from '@/components';
 import { HeroPhotoCard, PhotoCard, SharedGroundCard, TextPromptCard, ValuesCard, VoicePromptCard } from '@/components/profile/sections';
 import { promptById } from '@/constants/prompts';
 import { useMyProfile } from '@/features/me';
-import { mockProfileById, toCard } from '@/features/mock-data';
+import { toCard } from '@/features/mock-data';
 import { useSocial } from '@/features/social/social-store';
 import { haptic } from '@/lib/motion';
 import { colors, maxContentWidth, shadows, spacing } from '@/theme';
@@ -16,7 +16,7 @@ export default function Person() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const social = useSocial();
   const me = useMyProfile();
-  const p = mockProfileById(id);
+  const p = social.profile(id);
   if (!p) return null;
   const card = toCard(p, me);
   const match = Object.values(social.state.matches).find((m) => m.profileId === p.id);
@@ -24,8 +24,13 @@ export default function Person() {
   const openPhotos = (index: number) => router.push({ pathname: '/photos', params: { profileId: p.id, index: String(index) } });
   const reply = (params: { kind: 'voice' | 'prompt' | 'photo'; promptId?: string }) => router.push({ pathname: '/reply', params: { profileId: p.id, ...params } });
 
-  const likeBack = (rose = false) => {
-    const matchId = social.like(p.id, { rose });
+  const likeBack = async (rose = false) => {
+    let matchId: string | null;
+    try {
+      matchId = await social.like(p.id, { rose });
+    } catch {
+      return;
+    }
     if (matchId) {
       haptic.success();
       router.replace(`/match/${matchId}`);
@@ -83,7 +88,7 @@ export default function Person() {
               shadow={shadows.xl}
               onPress={() => {
                 haptic.light();
-                social.pass(p.id);
+                social.pass(p.id).catch(() => {});
                 router.back();
               }}
             />

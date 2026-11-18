@@ -6,7 +6,6 @@ import { Button, Enter, Icon, Text } from '@/components';
 import { INSTITUTIONS, LANGUAGES } from '@/constants/ghana';
 import { computeSharedGround } from '@/features/discover/shared-ground';
 import { useMyProfile } from '@/features/me';
-import { mockProfileById } from '@/features/mock-data';
 import { useSocial } from '@/features/social/social-store';
 import { colors, fonts, maxContentWidth, shadows, spacing } from '@/theme';
 
@@ -17,7 +16,7 @@ export default function MatchMoment() {
   const social = useSocial();
   const me = useMyProfile();
   const match = social.state.matches[matchId];
-  const them = match ? mockProfileById(match.profileId) : undefined;
+  const them = social.profile(match?.profileId);
 
   if (!them) {
     return (

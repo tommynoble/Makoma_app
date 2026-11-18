@@ -12,6 +12,7 @@ import { ME_KEY, useOnboarding } from '@/features/onboarding/onboarding-context'
 import { SOCIAL_KEY, useSocial } from '@/features/social/social-store';
 import { CSS_EASE_OUT, haptic } from '@/lib/motion';
 import { clearPersisted } from '@/lib/persist';
+import { isBackendConfigured, supabase } from '@/lib/supabase';
 import { colors, fonts, radius, spacing } from '@/theme';
 
 const LINKS: { icon: IconName; title: string; body: string; href: '/treats' | '/settings/privacy' }[] = [
@@ -38,6 +39,7 @@ export default function MyProfile() {
 
   const logOut = async () => {
     haptic.medium();
+    if (isBackendConfigured) await supabase.auth.signOut().catch(() => {});
     await clearPersisted([ME_KEY, SOCIAL_KEY]);
     reset();
     social.reset();
@@ -192,9 +194,9 @@ export default function MyProfile() {
             <Icon name="chevron_right" size={20} color="tertiary" />
           </Card>
         ))}
-        <Button title="Log out & reset demo" variant="tonal" size="md" haptics="none" onPress={logOut} />
+        <Button title={isBackendConfigured ? 'Log out' : 'Log out & reset demo'} variant="tonal" size="md" haptics="none" onPress={logOut} />
         <Text variant="labelSm" color="tertiary" center>
-          Makoma prototype · demo data stays on this device
+          {isBackendConfigured ? 'Makoma · your profile is saved to your account' : 'Makoma prototype · demo data stays on this device'}
         </Text>
       </View>
     </Screen>

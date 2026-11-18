@@ -3,6 +3,9 @@
 Intentional dating, built for Ghana. Intent-first matching, verified profiles, voice notes,
 treats redeemable at partner spots (paid with MoMo) and incognito mode for professionals.
 
+Connecting the backend: **[docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md)** (one script once the Supabase project exists).
+Roadmap: **[docs/ROADMAP.md](docs/ROADMAP.md)**.
+
 See **[docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md)** for the full product vision and how each
 feature maps to code.
 

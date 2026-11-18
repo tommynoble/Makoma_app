@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Card, CodeInput, Enter, Eyebrow, IconBadge, Text } from '@/components';
 import { normalizeGhanaPhone } from '@/constants/ghana';
+import { pullMyProfile } from '@/features/backend/profile-sync';
 import { useOnboarding } from '@/features/onboarding/onboarding-context';
 import { haptic } from '@/lib/motion';
 import { isBackendConfigured, supabase } from '@/lib/supabase';
@@ -65,10 +66,23 @@ export default function Phone() {
         haptic.light();
         return setError('That code didn’t work. Check it and try again.');
       }
+      // Returning user (maybe on a new phone): restore their profile and skip onboarding.
+      try {
+        const saved = await pullMyProfile();
+        if (saved) {
+          update(saved);
+          haptic.success();
+          setBusy(false);
+          return router.replace('/discover');
+        }
+        update({ onboarded: false });
+      } catch {
+        // Fall through to onboarding; the profile is saved at the end of it.
+      }
     }
     haptic.success();
     setBusy(false);
-    router.replace(draft.onboarded ? '/discover' : '/pledge');
+    router.replace(draft.onboarded && !isBackendConfigured ? '/discover' : '/pledge');
   };
 
   const field = { backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.hairline, paddingHorizontal: spacing.md, minHeight: 58, justifyContent: 'center' } as const;

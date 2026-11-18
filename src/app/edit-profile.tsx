@@ -8,7 +8,10 @@ import { Button, Chip, Eyebrow, Field, Icon, IconButton, PressableScale, Text } 
 import { CITIES, INSTITUTIONS, LANGUAGES, NEIGHBORHOODS } from '@/constants/ghana';
 import { INTENTS } from '@/constants/intents';
 import { MOCK_ME } from '@/features/mock-data';
+import { useResolvedSources } from '@/features/backend/media';
+import { useSaveProfile } from '@/features/backend/use-save-profile';
 import { useOnboarding, type OnboardingDraft } from '@/features/onboarding/onboarding-context';
+import { isBackendConfigured } from '@/lib/supabase';
 import { haptic } from '@/lib/motion';
 import { colors, fonts, maxContentWidth, radius, spacing } from '@/theme';
 import type { LanguageId } from '@/types/domain';
@@ -39,9 +42,12 @@ const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x
 /** Edit everything on your profile. Changes are kept locally until Save. */
 export default function EditProfile() {
   const insets = useSafeAreaInsets();
-  const { draft, update } = useOnboarding();
-  const [form, setForm] = useState<OnboardingDraft>(() => ({ ...draft, photos: draft.photos.length ? draft.photos : MOCK_ME.photos.map((p) => p.source) }));
+  const { draft } = useOnboarding();
+  const saveProfile = useSaveProfile();
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState<OnboardingDraft>(() => ({ ...draft, photos: draft.photos.length || isBackendConfigured ? draft.photos : MOCK_ME.photos.map((p) => p.source) }));
   const [error, setError] = useState<string | null>(null);
+  const shown = useResolvedSources(form.photos);
   const set = (patch: Partial<OnboardingDraft>) => setForm((f) => ({ ...f, ...patch }));
 
   const addPhotos = async () => {
@@ -71,10 +77,18 @@ export default function EditProfile() {
     set({ photos: [p, ...next] });
   };
 
-  const save = () => {
+  const save = async () => {
     if (!form.firstName?.trim()) return setError('Add your first name.');
     if (form.photos.length < 2) return setError('Add at least 2 photos so people can see the real you.');
-    update({ ...form, firstName: form.firstName.trim(), occupation: form.occupation?.trim(), church: form.church?.trim(), heritage: form.heritage?.trim() });
+    setError(null);
+    setSaving(true);
+    try {
+      await saveProfile({ ...form, firstName: form.firstName.trim(), occupation: form.occupation?.trim(), church: form.church?.trim(), heritage: form.heritage?.trim() });
+    } catch (e: any) {
+      setSaving(false);
+      return setError(e?.message ?? 'Couldn’t save. Check your connection and try again.');
+    }
+    setSaving(false);
     haptic.success();
     if (router.canGoBack()) router.back();
     else router.replace('/profile');
@@ -95,7 +109,7 @@ export default function EditProfile() {
             {form.photos.map((src, i) => (
               <View key={`${src}-${i}`} style={tile}>
                 <PressableScale scaleTo={0.97} onPress={() => makeMain(i)} accessibilityRole="button" accessibilityLabel={i === 0 ? 'Main photo' : `Photo ${i + 1}. Make main photo`} containerStyle={{ flex: 1 }} style={{ flex: 1 }}>
-                  <Image source={src} contentFit="cover" style={{ flex: 1, backgroundColor: colors.surfaceDim }} />
+                  <Image source={shown[i]} contentFit="cover" style={{ flex: 1, backgroundColor: colors.surfaceDim }} />
                 </PressableScale>
                 {i === 0 ? (
                   <View pointerEvents="none" style={{ position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.full, backgroundColor: colors.primary }}>
@@ -191,7 +205,7 @@ export default function EditProfile() {
             {error}
           </Text>
         ) : null}
-        <Button title="Save changes" haptics="none" onPress={save} />
+        <Button title={saving ? 'Saving…' : 'Save changes'} haptics="none" disabled={saving} onPress={save} />
       </View>
     </View>
   );

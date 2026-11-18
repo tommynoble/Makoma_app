@@ -6,9 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Icon, IconButton, Pill, Text } from '@/components';
 import { ageOf } from '@/components/profile/sections';
 import { promptById } from '@/constants/prompts';
-import { likeProfile } from '@/features/api';
 import { useSocial } from '@/features/social/social-store';
-import { mockProfileById } from '@/features/mock-data';
 import { useVoiceRecorder, VOICE_REPLY_MAX_MS } from '@/features/voice/use-voice-recorder';
 import { haptic } from '@/lib/motion';
 import { alpha, colors, radius, spacing, type } from '@/theme';
@@ -23,8 +21,8 @@ export default function Reply() {
   const insets = useSafeAreaInsets();
   const { profileId, kind, promptId } = useLocalSearchParams<{ profileId: string; kind: 'voice' | 'prompt' | 'photo'; promptId?: string }>();
   // TODO: load the profile from the backend when configured.
-  const profile = mockProfileById(profileId);
   const social = useSocial();
+  const profile = social.profile(profileId);
   const [note, setNote] = useState('');
   const [rose, setRose] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -61,8 +59,7 @@ export default function Reply() {
     setError(null);
     try {
       const opts = { promptId, comment: withNote && note.trim() ? note.trim() : undefined, rose };
-      await likeProfile(profile.id, opts);
-      const matchId = social.like(profile.id, opts);
+      const matchId = await social.like(profile.id, opts);
       if (matchId) {
         haptic.success();
         router.replace(`/match/${matchId}`);

@@ -4,6 +4,8 @@ import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Button, Card, Heading, IconButton, Screen, Text, Waveform } from '@/components';
 import { haptic } from '@/lib/motion';
+import { useResolvedSources } from '@/features/backend/media';
+import { useSaveProfile } from '@/features/backend/use-save-profile';
 import { useOnboarding } from '@/features/onboarding/onboarding-context';
 import { useVoiceRecorder, VOICE_INTRO_MAX_MS } from '@/features/voice/use-voice-recorder';
 import { colors, fonts, shadows, spacing } from '@/theme';
@@ -21,9 +23,22 @@ export default function Voice() {
   const { from } = useLocalSearchParams<{ from?: string }>();
   const fromProfile = from === 'profile';
   const { draft, update } = useOnboarding();
-  const finish = () => {
+  const save = useSaveProfile();
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  // Saves the whole profile (creates the account on the server at the end of onboarding).
+  const finish = async () => {
+    setSaveError(null);
+    setSaving(true);
+    try {
+      await save(fromProfile ? {} : { onboarded: true });
+    } catch (e: any) {
+      setSaving(false);
+      if (!fromProfile) update({ onboarded: false });
+      return setSaveError(e?.message ?? 'Couldn’t save your profile. Check your connection and try again.');
+    }
+    setSaving(false);
     if (fromProfile) return router.back();
-    update({ onboarded: true });
     haptic.success();
     router.replace('/discover');
   };
@@ -31,7 +46,8 @@ export default function Voice() {
   const [suggestion, setSuggestion] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const clip = draft.voiceIntro;
-  const player = useAudioPlayer(clip?.uri ?? null);
+  const [clipUrl] = useResolvedSources(clip ? [clip.uri] : []);
+  const player = useAudioPlayer(clipUrl || null);
   const playback = useAudioPlayerStatus(player);
 
   const start = async () => {
@@ -72,8 +88,13 @@ export default function Voice() {
       step={fromProfile ? undefined : 5}
       footer={
         <>
-          <Button title={fromProfile ? 'Done' : 'Finish & Enter Discover'} onPress={finish} />
-          {!clip && !fromProfile ? <Button title="Skip for now" variant="tonal" size="md" onPress={finish} /> : null}
+          {saveError ? (
+            <Text variant="labelMd" color="error" center accessibilityLiveRegion="polite">
+              {saveError}
+            </Text>
+          ) : null}
+          <Button title={saving ? 'Saving your profile…' : fromProfile ? 'Done' : 'Finish & Enter Discover'} disabled={saving} onPress={finish} />
+          {!clip && !fromProfile ? <Button title="Skip for now" variant="tonal" size="md" disabled={saving} onPress={finish} /> : null}
         </>
       }
     >

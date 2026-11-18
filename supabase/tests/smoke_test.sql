@@ -102,3 +102,26 @@ select redeem_voucher(lower(current_setting('test.code'))) ->> 'offer';
 
 \echo '20. Second redemption -> expect "already redeemed"'
 select redeem_voucher(current_setting('test.code'));
+
+-- ---- App read APIs (0002) ----
+\echo '21. Akosua likes Kwame with a note -> Kwame sees her in likes_received: expect ["Akosua"]'
+set role authenticated;
+set request.jwt.sub = '00000000-0000-0000-0000-00000000000b';
+select like_profile('00000000-0000-0000-0000-00000000000a', 'kenkey', 'Kenkey with shito, always.', true);
+set request.jwt.sub = '00000000-0000-0000-0000-00000000000a';
+select jsonb_path_query_array(likes_received(), '$[*].firstName');
+\echo '22. ...with what she liked -> expect "prompt" true'
+select likes_received()->0->'likesYou'->>'liked', (likes_received()->0->'likesYou'->>'rose')::boolean;
+\echo '23. Kwame''s matches -> expect ["Esi"] with a last message'
+select jsonb_path_query_array(my_matches(), '$[*].profile.firstName'), my_matches()->0->'lastMessage'->>'kind';
+\echo '24. Akosua cannot see Kwame''s matches -> expect []'
+set request.jwt.sub = '00000000-0000-0000-0000-00000000000b';
+select my_matches();
+\echo '25. my_profile returns your own profile -> expect Akosua'
+select my_profile()->>'firstName';
+\echo '26. profile_json is not callable directly -> expect permission denied'
+select profile_json('00000000-0000-0000-0000-00000000000c');
+\echo '27. Kwame likes back -> Akosua leaves his likes_received: expect []'
+set request.jwt.sub = '00000000-0000-0000-0000-00000000000a';
+select like_profile('00000000-0000-0000-0000-00000000000b') is not null;
+select likes_received();

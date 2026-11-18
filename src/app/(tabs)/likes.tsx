@@ -1,10 +1,10 @@
+import { useCallback } from 'react';
 import { View } from 'react-native';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Card, Enter, Heading, Icon, IconBadge, Pill, Screen, Text } from '@/components';
 import { ageOf } from '@/components/profile/sections';
 import { promptById } from '@/constants/prompts';
-import { incomingLikes } from '@/features/discover/deck';
 import { useSocial } from '@/features/social/social-store';
 import { colors, fonts, radius, spacing } from '@/theme';
 
@@ -13,7 +13,13 @@ const WHAT = { photo: 'Liked your photo', voice: 'Liked your voice intro', promp
 /** People who liked you, with what they liked and their note. Roses first. */
 export default function Likes() {
   const social = useSocial();
-  const likes = incomingLikes(social.state).sort((a, b) => Number(!!b.likesYou?.rose) - Number(!!a.likesYou?.rose));
+  const { refresh } = social;
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh]),
+  );
+  const likes = [...social.incoming].sort((a, b) => Number(!!b.likesYou?.rose) - Number(!!a.likesYou?.rose));
 
   return (
     <Screen back={false} bottomInset={false}>

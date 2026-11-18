@@ -8,9 +8,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Card, Enter, Icon, IconButton, PressableScale, Text, VoiceBubble } from '@/components';
 import { GiftButton, TreatUnlockBanner } from '@/components/gift-button';
 import { formatCedis } from '@/constants/ghana';
-import { fetchGiftOffers, fetchGiftUnlock, sendText, sendVoiceNote, startGift, subscribeToMessages } from '@/features/api';
+import { fetchGiftOffers, fetchGiftUnlock, startGift } from '@/features/api';
 import { computeGiftUnlock } from '@/features/gifts/unlock';
-import { mockProfileById } from '@/features/mock-data';
 import { useSocial } from '@/features/social/social-store';
 import { useVoiceRecorder } from '@/features/voice/use-voice-recorder';
 import { haptic, TOAST_IN, TOAST_OUT } from '@/lib/motion';
@@ -28,10 +27,9 @@ export default function Chat() {
   const { matchId } = useLocalSearchParams<{ matchId: string }>();
   const social = useSocial();
   const match = social.state.matches[matchId];
-  // TODO: load the match's profile from the backend.
-  const other = mockProfileById(match?.profileId ?? matchId?.replace(/^m-/, ''));
-  const [remote, setRemote] = useState<Message[]>([]);
-  const messages = useMemo(() => (isBackendConfigured ? remote : (social.state.messages[matchId] ?? [])), [remote, social.state.messages, matchId]);
+  const other = social.profile(match?.profileId ?? matchId?.replace(/^m-/, ''));
+  const messages = useMemo(() => social.state.messages[matchId] ?? [], [social.state.messages, matchId]);
+  const { openChat } = social;
   const typing = social.typingIn === matchId;
   const list = useRef<ComponentRef<typeof FlatList<Message>>>(null);
   const [serverUnlock, setServerUnlock] = useState<GiftUnlock | null>(null);
@@ -44,13 +42,16 @@ export default function Chat() {
 
   useEffect(() => {
     fetchGiftOffers().then(setOffers).catch(() => setOffers([]));
+    if (!matchId) return;
+    return openChat(matchId);
+  }, [matchId, openChat]);
+
+  // The server decides whether treats are unlocked; refresh it as voice notes arrive.
+  const voiceCount = messages.filter((m) => m.kind === 'voice').length;
+  useEffect(() => {
     if (!isBackendConfigured || !matchId) return;
     fetchGiftUnlock(matchId).then(setServerUnlock).catch(() => {});
-    return subscribeToMessages(matchId, (m) => {
-      setRemote((prev) => [...prev, m]);
-      fetchGiftUnlock(matchId).then(setServerUnlock).catch(() => {});
-    });
-  }, [matchId]);
+  }, [matchId, voiceCount]);
 
   // Local count keeps the indicator responsive; the server decides at purchase time.
   const localUnlock = useMemo(() => computeGiftUnlock(messages), [messages]);
@@ -83,8 +84,7 @@ export default function Chat() {
     setText('');
     haptic.light();
     try {
-      if (isBackendConfigured) await sendText(matchId, body);
-      else social.send(matchId, { kind: 'text', body });
+      await social.send(matchId, { kind: 'text', body });
     } catch {
       setText(body);
       setNotice('Message not sent. Check your connection and try again.');
@@ -97,8 +97,7 @@ export default function Chat() {
     if (!clip) return;
     haptic.light();
     try {
-      if (isBackendConfigured) await sendVoiceNote(matchId, clip.uri, clip.durationMs);
-      else social.send(matchId, { kind: 'voice', audioUrl: clip.uri, durationMs: clip.durationMs });
+      await social.send(matchId, { kind: 'voice', audioUrl: clip.uri, durationMs: clip.durationMs });
     } catch {
       setNotice('Voice note not sent. Check your connection and try again.');
     }

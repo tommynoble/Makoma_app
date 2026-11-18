@@ -4,9 +4,9 @@
  * mock data while the backend isn't configured, so screens can be built
  * against the designs before Supabase is set up.
  */
-import { File } from 'expo-file-system';
+import { uploadLocal } from '@/features/backend/media';
 import { isBackendConfigured, supabase } from '@/lib/supabase';
-import type { DiscoverCard, DiscoverFilters, GiftOffer, GiftUnlock, Message, Visibility, Voucher } from '@/types/domain';
+import type { DiscoverCard, DiscoverFilters, GiftOffer, GiftUnlock, Visibility, Voucher } from '@/types/domain';
 import { MOCK_CARDS, MOCK_GIFT_OFFERS, MOCK_VOUCHERS } from './mock-data';
 
 // ---- Discover -------------------------------------------------------------
@@ -65,28 +65,14 @@ export async function sendVoiceNote(matchId: string, uri: string, durationMs: nu
   const userId = auth.user?.id;
   if (!userId) throw new Error('Not signed in');
   const path = `${matchId}/${userId}/${Date.now()}.m4a`;
-  const bytes = await new File(uri).arrayBuffer();
-  const up = await supabase.storage.from('voice-notes').upload(path, bytes, { contentType: 'audio/m4a' });
-  if (up.error) throw up.error;
+  await uploadLocal('voice-notes', path, uri, 'audio/m4a');
   const { error } = await supabase
     .from('messages')
     .insert({ match_id: matchId, kind: 'voice', audio_path: path, duration_ms: durationMs });
   if (error) throw error;
 }
 
-export function subscribeToMessages(matchId: string, onMessage: (m: Message) => void) {
-  const channel = supabase
-    .channel(`match:${matchId}`)
-    .on(
-      'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'messages', filter: `match_id=eq.${matchId}` },
-      (payload) => onMessage(payload.new as unknown as Message),
-    )
-    .subscribe();
-  return () => {
-    supabase.removeChannel(channel);
-  };
-}
+// Live message updates: see subscribeMessages in features/backend/remote.ts.
 
 // ---- Treats (partner vouchers) -------------------------------------------
 // Gifts are treats bought from Makoma and redeemed at partner spots. Cash is
@@ -172,10 +158,8 @@ export async function submitSelfieVerification(selfieUri: string, pose: string) 
   const userId = auth.user?.id;
   if (!userId) throw new Error('Not signed in');
   const path = `${userId}/${Date.now()}.jpg`;
-  const bytes = await new File(selfieUri).arrayBuffer();
-  const up = await supabase.storage.from('verification-selfies').upload(path, bytes, { contentType: 'image/jpeg' });
-  if (up.error) throw up.error;
-  const { error } = await supabase.from('verification_requests').insert({ selfie_path: path, pose });
+  await uploadLocal('verification-selfies', path, selfieUri, 'image/jpeg');
+  const { error } = await supabase.from('verification_requests').insert({ profile_id: userId, selfie_path: path, pose });
   if (error) throw error;
 }
 

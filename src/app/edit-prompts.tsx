@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Card, Eyebrow, Field, Icon, IconButton, Text } from '@/components';
 import { PROMPT_SLOTS, promptById } from '@/constants/prompts';
+import { useSaveProfile } from '@/features/backend/use-save-profile';
 import { useOnboarding } from '@/features/onboarding/onboarding-context';
 import { haptic } from '@/lib/motion';
 import { colors, fonts, maxContentWidth, radius, spacing } from '@/theme';
@@ -15,6 +16,22 @@ import { colors, fonts, maxContentWidth, radius, spacing } from '@/theme';
 export default function EditPrompts() {
   const insets = useSafeAreaInsets();
   const { draft, update } = useOnboarding();
+  const saveProfile = useSaveProfile();
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const done = async () => {
+    setSaveError(null);
+    setSaving(true);
+    try {
+      await saveProfile();
+    } catch (e: any) {
+      setSaving(false);
+      return setSaveError(e?.message ?? 'Couldn’t save. Check your connection and try again.');
+    }
+    setSaving(false);
+    haptic.success();
+    router.back();
+  };
   const firstOpen = PROMPT_SLOTS.find((s) => !draft.prompts[s.id]?.answer.trim())?.id ?? null;
   const [editing, setEditing] = useState<string | null>(firstOpen);
   const answered = PROMPT_SLOTS.filter((s) => draft.prompts[s.id]?.answer.trim()).length;
@@ -128,7 +145,12 @@ export default function EditPrompts() {
         </View>
       </ScrollView>
       <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: Math.max(insets.bottom, spacing.md), maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
-        <Button title={answered === 3 ? 'Save prompts' : `Save (${answered}/3 answered)`} onPress={() => router.back()} />
+        {saveError ? (
+          <Text variant="labelMd" color="error" center style={{ marginBottom: spacing.sm }}>
+            {saveError}
+          </Text>
+        ) : null}
+        <Button title={saving ? 'Saving…' : answered === 3 ? 'Save prompts' : `Save (${answered}/3 answered)`} haptics="none" disabled={saving} onPress={done} />
       </View>
     </View>
   );

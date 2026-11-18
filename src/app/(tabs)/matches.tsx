@@ -1,9 +1,10 @@
+import { useCallback } from 'react';
 import { ScrollView, View } from 'react-native';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Card, Enter, Heading, Icon, IconBadge, PressableScale, Screen, Text } from '@/components';
 import { formatCedis } from '@/constants/ghana';
-import { MOCK_GIFT_OFFERS, mockProfileById } from '@/features/mock-data';
+import { MOCK_GIFT_OFFERS } from '@/features/mock-data';
 import { lastMessage, useSocial } from '@/features/social/social-store';
 import { colors, fonts, spacing } from '@/theme';
 import type { Message } from '@/types/domain';
@@ -27,9 +28,16 @@ function timeAgo(iso: string) {
 
 /** New matches up top, then conversations sorted by the latest message. */
 export default function Matches() {
-  const { state } = useSocial();
+  const social = useSocial();
+  const { refresh } = social;
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh]),
+  );
+  const { state } = social;
   const matches = Object.values(state.matches)
-    .map((m) => ({ ...m, profile: mockProfileById(m.profileId)!, last: lastMessage(state, m.id) }))
+    .map((m) => ({ ...m, profile: social.profile(m.profileId)!, last: lastMessage(state, m.id) }))
     .filter((m) => m.profile)
     .sort((a, b) => ((b.last?.createdAt ?? b.createdAt) > (a.last?.createdAt ?? a.createdAt) ? 1 : -1));
 

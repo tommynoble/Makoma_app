@@ -40,9 +40,10 @@ export default function Selfie() {
       setBusy(true);
       const photo = await camera.current?.takePictureAsync({ quality: 0.7 });
       if (!photo) throw new Error('Could not take the photo. Please try again.');
-      if (isBackendConfigured) await submitSelfieVerification(photo.uri, pose);
+      // During onboarding the account doesn't exist on the server yet: the selfie is sent when the profile is saved.
+      if (isBackendConfigured && draft.onboarded) await submitSelfieVerification(photo.uri, pose);
       haptic.success();
-      update({ selfieSubmitted: true });
+      update({ selfieSubmitted: true, pendingSelfie: isBackendConfigured && !draft.onboarded ? { uri: photo.uri, pose } : undefined });
     } catch (e: any) {
       setError(e?.message ?? 'Something went wrong. Please try again.');
     } finally {
