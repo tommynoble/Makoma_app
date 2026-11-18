@@ -5,6 +5,8 @@ export const spacing = {
   md: 16,
   lg: 24,
   xl: 36,
+  /** Gap between major sections of a screen. */
+  section: 32,
   margin: 20,
   gutter: 16,
 } as const;

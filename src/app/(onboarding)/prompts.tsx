@@ -31,7 +31,7 @@ export default function Prompts() {
       }
     >
       <View style={{ gap: spacing.sm }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
           <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primaryContainer }} />
           <Text variant="labelSm" color="primary" uppercase>
             Your Story
@@ -54,13 +54,13 @@ export default function Prompts() {
               <Card
                 key={slot.id}
                 bg="surfaceContainerLow"
-                padding="margin"
+                padding="lg"
                 onPress={() => setEditing(slot.id)}
                 accessibilityLabel={`Add your ${slot.label} prompt`}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}
               >
                 <IconBadge icon="add" size={44} iconSize={20} bg="surfaceContainerHigh" color="primary" />
-                <View style={{ flex: 1, gap: 2 }}>
+                <View style={{ flex: 1, gap: spacing.xs }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
                     <Text variant="labelMd">{slot.label}</Text>
                     <Pill
@@ -80,7 +80,7 @@ export default function Prompts() {
           }
 
           return (
-            <Card key={slot.id} padding="margin" style={{ gap: 12 }}>
+            <Card key={slot.id} style={{ gap: spacing.md }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                 <Text variant="labelSm" color="secondary" uppercase style={{ flex: 1 }}>
                   Prompt {index + 1} of 3 • {slot.label}
@@ -95,7 +95,7 @@ export default function Prompts() {
 
               {editing === slot.id ? (
                 <>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs }}>
                     {slot.promptIds.map((id) => {
                       const on = id === promptId;
                       return (
@@ -143,11 +143,11 @@ export default function Prompts() {
         })}
       </View>
 
-      <Card bg="surfaceContainer" shadow="none" style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+      <Card bg="surfaceContainer" shadow="none" style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' }}>
         <IconBadge icon="tips_and_updates" size={28} iconSize={16} bg="secondary" color="onSecondary" />
-        <View style={{ flex: 1, gap: 2 }}>
+        <View style={{ flex: 1, gap: spacing.xs }}>
           <Text variant="labelMd">A tip</Text>
-          <Text color="onSurfaceVariant" style={{ lineHeight: 22 }}>
+          <Text color="onSurfaceVariant">
             Shared humour and childhood staples build immediate warmth. Authenticity always lands better than a polished résumé.
           </Text>
         </View>

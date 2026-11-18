@@ -9,7 +9,7 @@ export function Card({
   children,
   bg = 'surfaceContainerLowest',
   rounded = 'lg',
-  padding = 'md',
+  padding = 'lg',
   shadow = 'sm',
   onPress,
   accessibilityLabel,

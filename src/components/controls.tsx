@@ -82,7 +82,7 @@ export function Field({ serif, style, ...props }: TextInputProps & { serif?: boo
     <TextInput
       placeholderTextColor={colors.tertiaryContainer}
       style={[
-        serif ? type.bodyMd : { fontFamily: fonts.sansMedium, fontSize: 15, lineHeight: 22 },
+        serif ? type.bodyMd : { fontFamily: fonts.sansMedium, fontSize: 15, lineHeight: 24 },
         {
           color: colors.onSurface,
           backgroundColor: colors.surfaceContainerLow,

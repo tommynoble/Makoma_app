@@ -40,7 +40,7 @@ export default function Intentions() {
         subtitle="Be upfront. We only match you with people whose relationship outlook aligns with yours."
       />
 
-      <View accessibilityRole="radiogroup" style={{ gap: spacing.sm }}>
+      <View accessibilityRole="radiogroup" style={{ gap: spacing.md }}>
         {INTENTS.map((i) => {
           const selected = draft.intent === i.id;
           return (
@@ -50,9 +50,9 @@ export default function Intentions() {
               selected={selected}
               accessibilityLabel={`${i.label}. ${i.description}`}
               onPress={() => update({ intent: i.id })}
-              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm }}
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md }}
             >
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, gap: spacing.xs }}>
                 <Text variant="labelLg" color={selected ? 'onSecondaryContainer' : 'onSurface'}>
                   {i.label}
                 </Text>
@@ -130,7 +130,7 @@ export default function Intentions() {
         <Card bg="surfaceContainer" style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
           <View style={{ flex: 1, flexDirection: 'row', gap: spacing.sm }}>
             <Icon name="shield_person" size={22} color="primary" filled style={{ marginTop: 2 }} />
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, gap: spacing.xs }}>
               <Text variant="labelMd">Only show neighbourhood, hide exact distance</Text>
               <Text color="tertiary">Keeps your privacy while people can still see you are nearby.</Text>
             </View>

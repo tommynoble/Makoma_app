@@ -80,7 +80,7 @@ export default function Voice() {
 
       <Card bg="surfaceContainerLow" padding="none" style={{ overflow: 'hidden', flexDirection: 'row' }}>
         <View style={{ width: 6, backgroundColor: colors.secondaryContainer }} />
-        <View style={{ flex: 1, padding: spacing.md, gap: spacing.xs }}>
+        <View style={{ flex: 1, padding: spacing.lg, gap: spacing.sm }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Icon name="lightbulb" size={16} color="secondary" />
@@ -107,7 +107,7 @@ export default function Voice() {
         </View>
       </Card>
 
-      <Card rounded="xl" padding="lg" shadow="md" style={{ gap: spacing.md }}>
+      <Card rounded="xl" padding="lg" shadow="md" style={{ gap: spacing.lg }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <Pill
             size="md"

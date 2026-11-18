@@ -48,7 +48,7 @@ export function Screen({
 }) {
   const insets = useSafeAreaInsets();
   const body = (
-    <View style={{ width: '100%', maxWidth: maxContentWidth, alignSelf: 'center', paddingHorizontal: spacing.margin, gap: spacing.lg }}>
+    <View style={{ width: '100%', maxWidth: maxContentWidth, alignSelf: 'center', paddingHorizontal: spacing.margin, gap: spacing.section }}>
       {children}
     </View>
   );
@@ -76,7 +76,7 @@ export function Screen({
       {scroll ? (
         <ScrollView
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ paddingTop: spacing.lg, paddingBottom: spacing.xl + (footer || !bottomInset ? 0 : insets.bottom) }}
+          contentContainerStyle={{ paddingTop: spacing.lg + spacing.xs, paddingBottom: spacing.xl + (footer || !bottomInset ? 0 : insets.bottom) }}
         >
           {body}
         </ScrollView>
@@ -87,7 +87,7 @@ export function Screen({
         <View
           style={{
             paddingHorizontal: spacing.margin,
-            paddingTop: spacing.sm,
+            paddingTop: spacing.md,
             paddingBottom: Math.max(insets.bottom, spacing.md),
             gap: spacing.sm,
             backgroundColor: colors.surface,
@@ -106,7 +106,7 @@ export function Screen({
 /** Eyebrow + serif headline + supporting line: the opening block of every onboarding screen. */
 export function Heading({ eyebrow, title, subtitle, center }: { eyebrow?: ReactNode; title: string; subtitle?: string; center?: boolean }) {
   return (
-    <View style={{ gap: spacing.xs, alignItems: center ? 'center' : 'flex-start' }}>
+    <View style={{ gap: spacing.sm, alignItems: center ? 'center' : 'flex-start' }}>
       {eyebrow}
       <Text variant="headlineXl" center={center} accessibilityRole="header" style={{ marginTop: eyebrow ? 4 : 0 }}>
         {title}

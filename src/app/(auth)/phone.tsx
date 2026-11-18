@@ -57,7 +57,7 @@ export default function Phone() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface, paddingTop: insets.top + spacing.xl, paddingHorizontal: spacing.margin, paddingBottom: insets.bottom + spacing.md }}>
       <View style={{ width: '100%', maxWidth: maxContentWidth, alignSelf: 'center', flex: 1, gap: spacing.xl }}>
-        <View style={{ alignItems: 'center', gap: spacing.md }}>
+        <View style={{ alignItems: 'center', gap: spacing.md, marginTop: spacing.lg }}>
           <IconBadge icon="verified_user" size={72} iconSize={32} bg="surfaceContainerHigh" color="primary" />
           <Text variant="headlineXl" color="primary" accessibilityRole="header">
             Makoma
@@ -67,7 +67,7 @@ export default function Phone() {
           </Text>
         </View>
 
-        <Card rounded="xl" padding="lg" shadow="md" style={{ gap: spacing.md }}>
+        <Card rounded="xl" padding="lg" shadow="md" style={{ gap: spacing.lg }}>
           <Text variant="labelLg">{sent ? 'Enter your 6-digit code' : 'Phone number'}</Text>
           <View
             style={{

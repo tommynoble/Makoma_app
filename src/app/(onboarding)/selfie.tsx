@@ -150,11 +150,11 @@ export default function Selfie() {
         </View>
       </View>
 
-      <Card bg="surfaceContainerLow" rounded="xl" style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' }}>
+      <Card bg="surfaceContainerLow" style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' }}>
         <IconBadge icon="face_retouching_natural" size={40} iconSize={22} bg="surfaceContainerHighest" color="secondary" />
-        <View style={{ flex: 1, gap: 2 }}>
+        <View style={{ flex: 1, gap: spacing.xs }}>
           <Text variant="labelLg">Framing tips</Text>
-          <Text color="onSurfaceVariant" style={{ lineHeight: 22 }}>
+          <Text color="onSurfaceVariant">
             Position your face in the circle and {pose}. Keep clear, natural lighting.
           </Text>
         </View>

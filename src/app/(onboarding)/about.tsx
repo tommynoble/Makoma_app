@@ -28,16 +28,16 @@ export default function About() {
         subtitle="Your work and direction matter here as much as your photos."
       />
 
-      <View style={{ gap: spacing.md }}>
-        <View style={{ gap: spacing.xs }}>
+      <View style={{ gap: spacing.lg }}>
+        <View style={{ gap: spacing.sm }}>
           <Text variant="labelMd">First name</Text>
           <Field accessibilityLabel="First name" placeholder="e.g. Kwame" value={draft.firstName} onChangeText={(firstName) => update({ firstName })} autoCapitalize="words" />
         </View>
-        <View style={{ gap: spacing.xs }}>
+        <View style={{ gap: spacing.sm }}>
           <Text variant="labelMd">What do you do?</Text>
           <Field accessibilityLabel="Occupation" placeholder="e.g. Pharmacist, Software engineer" value={draft.occupation} onChangeText={(occupation) => update({ occupation })} />
         </View>
-        <View style={{ gap: spacing.xs }}>
+        <View style={{ gap: spacing.sm }}>
           <Text variant="labelMd">Where are you headed?</Text>
           <Field
             serif
@@ -51,8 +51,8 @@ export default function About() {
         </View>
       </View>
 
-      <View style={{ gap: spacing.sm }}>
-        <View style={{ gap: spacing.xs }}>
+      <View style={{ gap: spacing.md }}>
+        <View style={{ gap: spacing.sm }}>
           <Text variant="labelSm" color="tertiary" uppercase>
             Shared Roots
           </Text>

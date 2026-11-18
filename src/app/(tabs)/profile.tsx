@@ -19,7 +19,7 @@ export default function MyProfile() {
     <Screen back={false} bottomInset={false}>
       <View style={{ alignItems: 'center', gap: spacing.md }}>
         <Image source={me.photos[0]?.source} style={{ width: 112, height: 112, borderRadius: 56 }} contentFit="cover" accessibilityLabel="Your photo" />
-        <View style={{ alignItems: 'center', gap: spacing.xs }}>
+        <View style={{ alignItems: 'center', gap: spacing.sm }}>
           <Text variant="headlineXl" accessibilityRole="header">
             {me.firstName}, {ageOf(me.birthDate)}
           </Text>
@@ -32,7 +32,7 @@ export default function MyProfile() {
           <Pill label={intentLabel(me.intent)} icon="favorite" iconColor="secondary" color="onSecondaryFixed" bg="secondaryFixed" size="md" />
         </View>
       </View>
-      <View style={{ gap: spacing.sm }}>
+      <View style={{ gap: spacing.md }}>
         {LINKS.map((l) => (
           <Card key={l.href} onPress={() => router.push(l.href)} accessibilityLabel={l.title} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
             <IconBadge icon={l.icon} size={40} iconSize={20} bg="surfaceContainerHigh" color="primary" />

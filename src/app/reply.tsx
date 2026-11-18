@@ -71,7 +71,7 @@ export default function Reply() {
     <ScrollView
       keyboardShouldPersistTaps="handled"
       style={{ backgroundColor: colors.surfaceContainerLowest }}
-      contentContainerStyle={{ paddingHorizontal: spacing.margin, paddingTop: spacing.lg, paddingBottom: Math.max(insets.bottom, spacing.md) + spacing.sm, gap: spacing.md }}
+      contentContainerStyle={{ paddingHorizontal: spacing.margin, paddingTop: spacing.lg, paddingBottom: Math.max(insets.bottom, spacing.md) + spacing.sm, gap: spacing.lg }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: alpha(colors.surfaceContainerHighest, 0.8) }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
@@ -96,7 +96,7 @@ export default function Reply() {
       </View>
 
       {quoteTitle ? (
-        <View style={{ padding: 14, gap: spacing.sm, borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: colors.surfaceContainerLow, borderWidth: 1, borderColor: alpha(colors.surfaceContainerHighest, 0.8) }}>
+        <View style={{ padding: spacing.md, gap: spacing.sm, borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: colors.surfaceContainerLow, borderWidth: 1, borderColor: alpha(colors.surfaceContainerHighest, 0.8) }}>
           {kind === 'voice' ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Pill label="Voice Prompt" dot="primaryContainer" color="primary" bg="surfaceContainerLowest" uppercase />
@@ -108,7 +108,7 @@ export default function Reply() {
           </Text>
           {quoteBody ? (
             <View style={{ borderLeftWidth: 2, borderLeftColor: colors.secondaryContainer, paddingLeft: 10 }}>
-              <Text variant="labelMd" color="tertiary" numberOfLines={3} style={{ fontFamily: 'PlusJakartaSans_500Medium', lineHeight: 20 }}>
+              <Text variant="labelMd" color="tertiary" numberOfLines={3} style={{ fontFamily: 'PlusJakartaSans_500Medium', lineHeight: 22 }}>
                 “{quoteBody}”
               </Text>
             </View>
@@ -123,7 +123,7 @@ export default function Reply() {
             {note.length} / {MAX_NOTE}
           </Text>
         </View>
-        <View style={{ backgroundColor: colors.surfaceContainerLowest, borderRadius: radius.md, borderCurve: 'continuous', borderWidth: 1, borderColor: colors.surfaceContainerHighest, padding: 12, gap: spacing.sm }}>
+        <View style={{ backgroundColor: colors.surfaceContainerLowest, borderRadius: radius.md, borderCurve: 'continuous', borderWidth: 1, borderColor: colors.surfaceContainerHighest, padding: spacing.md, gap: spacing.md }}>
           <TextInput
             accessibilityLabel="Your note"
             multiline

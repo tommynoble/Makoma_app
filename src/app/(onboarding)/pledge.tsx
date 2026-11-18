@@ -69,14 +69,14 @@ export default function Pledge() {
 
       <View style={{ gap: spacing.md }}>
         {RULES.map((r) => (
-          <Card key={r.title} rounded="md" style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' }}>
+          <Card key={r.title} style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' }}>
             <IconBadge icon={r.icon} bg={r.bg} color={r.color} rounded="md" filled={r.filled} />
-            <View style={{ flex: 1, gap: 2 }}>
+            <View style={{ flex: 1, gap: spacing.xs }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                 <Text variant="labelLg">{r.title}</Text>
                 {r.tag ? <Pill label={r.tag} bg="surfaceContainer" color="tertiary" style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.xs }} /> : null}
               </View>
-              <Text color="tertiary" style={{ lineHeight: 22 }}>
+              <Text color="tertiary">
                 {r.body}
               </Text>
             </View>
@@ -84,7 +84,7 @@ export default function Pledge() {
         ))}
       </View>
 
-      <Card bg="surfaceContainerLow" rounded="md" shadow="none" style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+      <Card bg="surfaceContainerLow" shadow="none" padding="margin" style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
         <Checkbox value={draft.pledgeAccepted} onChange={(pledgeAccepted) => update({ pledgeAccepted })} label="I hold myself accountable to these values" />
         <Icon name="favorite" size={20} color="primary" />
       </Card>

@@ -13,17 +13,17 @@ export default function Privacy() {
   const [notice, setNotice] = useState<string | null>(null);
   const plans = SACHET_PLANS.filter((p) => p.feature === 'incognito');
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: colors.surface }} contentContainerStyle={{ padding: spacing.margin, gap: spacing.lg, maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
+    <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: colors.surface }} contentContainerStyle={{ padding: spacing.margin, paddingTop: spacing.lg, gap: spacing.section, maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
       <View style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' }}>
         <IconBadge icon="visibility_off" bg="primaryFixed" color="onPrimaryContainer" />
-        <View style={{ flex: 1, gap: spacing.xs }}>
+        <View style={{ flex: 1, gap: spacing.sm }}>
           <Text variant="headlineLg" accessibilityRole="header">
             Incognito mode
           </Text>
           <Text color="tertiary">Only people you like will see your profile. No colleagues, no gossip.</Text>
         </View>
       </View>
-      <View accessibilityRole="radiogroup" style={{ gap: spacing.sm }}>
+      <View accessibilityRole="radiogroup" style={{ gap: spacing.md }}>
         {plans.map((p) => (
           <Card key={p.id} bg={plan === p.id ? 'surfaceContainerHigh' : 'surfaceContainerLowest'} selected={plan === p.id} onPress={() => setPlan(p.id)} accessibilityLabel={`${p.label}, ${formatCedis(p.pricePesewas)}`} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
             <View style={{ flex: 1 }}>

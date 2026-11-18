@@ -13,12 +13,12 @@ export default function Matches() {
     <Screen back={false} bottomInset={false}>
       <Heading title="Conversations" subtitle="Notes, voice exchanges & intentions" />
       <Pill label="1 conversation" dot="primary" color="primary" uppercase />
-      <Card rounded="xl" shadow="md" padding="margin" onPress={() => router.push('/chat/demo')} accessibilityLabel={`Open conversation with ${akosua.firstName}`} style={{ flexDirection: 'row', gap: spacing.md }}>
+      <Card rounded="xl" shadow="md" padding="lg" onPress={() => router.push('/chat/demo')} accessibilityLabel={`Open conversation with ${akosua.firstName}`} style={{ flexDirection: 'row', gap: spacing.md }}>
         <View>
           <Image source={akosua.photos[0]?.source} style={{ width: 56, height: 56, borderRadius: 28 }} contentFit="cover" />
           <View style={{ position: 'absolute', top: 0, right: 0, width: 12, height: 12, borderRadius: 6, backgroundColor: colors.secondary, borderWidth: 2, borderColor: colors.surfaceContainerLowest }} />
         </View>
-        <View style={{ flex: 1, gap: spacing.sm }}>
+        <View style={{ flex: 1, gap: spacing.md }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Text variant="headlineMd">{akosua.firstName}</Text>

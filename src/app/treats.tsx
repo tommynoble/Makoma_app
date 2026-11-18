@@ -16,7 +16,7 @@ export default function Treats() {
   }, []);
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: colors.surface }} contentContainerStyle={{ padding: spacing.margin, gap: spacing.lg, maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
+    <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: colors.surface }} contentContainerStyle={{ padding: spacing.margin, paddingTop: spacing.lg, gap: spacing.section, maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
       <Text color="tertiary">Show the QR code or code at the partner spot to redeem.</Text>
       {failed ? <Text color="error">We couldn’t load your treats. Pull down to try again.</Text> : null}
       {vouchers?.length === 0 ? <Text color="tertiary">No treats yet. When a match sends you one, it appears here.</Text> : null}

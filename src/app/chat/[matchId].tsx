@@ -203,13 +203,13 @@ export default function Chat() {
       ) : null}
 
       {showTray ? (
-        <Card rounded="lg" shadow="xl" style={{ marginHorizontal: spacing.sm, marginBottom: spacing.sm, gap: spacing.sm }}>
+        <Card rounded="lg" shadow="xl" style={{ marginHorizontal: spacing.sm, marginBottom: spacing.sm, gap: spacing.md }}>
           <Text variant="labelSm" color="secondary" uppercase>
             Send a treat
           </Text>
           <Text variant="headlineMd">Treat {other.firstName} to something.</Text>
           <Text color="tertiary">They get a voucher to redeem at a partner spot. No cash is sent.</Text>
-          <View accessibilityRole="radiogroup" style={{ gap: 6 }}>
+          <View accessibilityRole="radiogroup" style={{ gap: spacing.sm }}>
             {offers.map((o) => {
               const on = o.id === selected;
               return (
@@ -222,7 +222,8 @@ export default function Chat() {
                     flexDirection: 'row',
                     alignItems: 'center',
                     gap: 12,
-                    padding: 12,
+                    paddingVertical: 14,
+                    paddingHorizontal: spacing.md,
                     borderRadius: radius.md,
                     borderCurve: 'continuous',
                     backgroundColor: on ? colors.secondaryFixed : colors.surfaceContainerLow,
