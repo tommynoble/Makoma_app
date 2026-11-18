@@ -75,10 +75,10 @@ export default function MyProfile() {
                 <View style={{ flex: 1 }}>
                   <Text variant="labelLg" color={i.done ? 'tertiary' : 'onSurface'} style={{ fontFamily: fonts.sansBold, textDecorationLine: i.done ? 'line-through' : 'none' }}>
                     {i.label}
-                    {i.progress && !i.done ? `  (${i.progress.done}/${i.progress.total})` : ''}
                   </Text>
                   {!i.done ? (
                     <Text variant="labelMd" color="tertiary" style={{ fontFamily: fonts.sansMedium }}>
+                      {i.progress ? `${i.progress.done} of ${i.progress.total} answered · ` : ''}
                       {i.hint}
                     </Text>
                   ) : null}
