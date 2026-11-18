@@ -70,3 +70,16 @@ Paystack webhook URL at the `paystack-webhook` function.
 npm run typecheck
 PGHOST=localhost PGPORT=5432 ./supabase/tests/run_local.sh   # needs a local Postgres
 ```
+
+## Motion & interaction
+
+Rules (from Expo's animation guidance) so the app feels premium without getting in the way:
+
+- **Reanimated on the UI thread**, animating only `transform` and `opacity`. Helpers live in `src/lib/motion.ts`.
+- **Press feedback** on every tappable surface via `PressableScale` (3% scale, 120ms). `Button`, `IconButton` and tappable `Card`s use it automatically.
+- **Selection controls** (`Toggle`, `Checkbox`, `RadioMark`, `Pop`) animate state in 160–180ms; option cards use `accessibilityRole="radio"`.
+- **Entrances** use `<Enter>` (CSS keyframes, 300ms, 50ms stagger), on onboarding steps and when content is swapped (next profile, treats unlocking). Tabs never animate.
+- **Exits** (toasts, the treat tray) use layout animations `TOAST_IN` / `TOAST_OUT`.
+- **Haptics**: one per user action, always alongside a visual change: `haptic.select()` for choices, `light()` for like, pass and send, `medium()` for roses and payments, `success()` for treats unlocking and selfies sent.
+- **Reduce Motion** is respected: entrances are skipped and screens crossfade instead of sliding.
+- **Photo viewer** (`src/app/photos.tsx`): native modal (swipe down on iOS), paging, opened by tapping a profile photo.

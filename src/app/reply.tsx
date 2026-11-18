@@ -9,6 +9,7 @@ import { promptById } from '@/constants/prompts';
 import { likeProfile } from '@/features/api';
 import { mockProfileById } from '@/features/mock-data';
 import { useVoiceRecorder, VOICE_REPLY_MAX_MS } from '@/features/voice/use-voice-recorder';
+import { haptic } from '@/lib/motion';
 import { alpha, colors, radius, spacing, type } from '@/theme';
 
 const MAX_NOTE = 250;
@@ -56,6 +57,8 @@ export default function Reply() {
   const send = async (withNote: boolean) => {
     setBusy(true);
     setError(null);
+    if (rose) haptic.medium();
+    else haptic.light();
     try {
       await likeProfile(profile.id, { promptId, comment: withNote ? note : undefined, rose });
       router.back();
@@ -146,7 +149,10 @@ export default function Reply() {
                 {rec.isRecording ? 'Stop recording' : voiceSecs != null ? `Voice reply added (${voiceSecs}s)` : 'Record voice reply (20s)'}
               </Text>
             </Pressable>
-            <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: rose }} hitSlop={10} onPress={() => setRose((r) => !r)} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 36 }}>
+            <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: rose }} hitSlop={10} onPress={() => {
+                haptic.select();
+                setRose((r) => !r);
+              }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 36 }}>
               <Icon name="eco" size={16} color="secondary" filled={rose} />
               <Text variant="labelMd" color="secondary" style={{ textDecorationLine: rose ? 'none' : 'underline' }}>
                 {rose ? 'Rose attached' : 'Attach Rose'}

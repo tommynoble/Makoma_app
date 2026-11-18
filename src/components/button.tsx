@@ -1,6 +1,7 @@
-import { ActivityIndicator, Pressable, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, type StyleProp, type ViewStyle } from 'react-native';
 import { colors, fonts, radius, shadows, spacing, type ColorName } from '@/theme';
 import { Icon, type IconName } from './icon';
+import { PressableScale } from './pressable-scale';
 import { Text } from './text';
 
 const variants = {
@@ -47,13 +48,14 @@ export function Button({
 }) {
   const v = variants[variant];
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       accessibilityLabel={title}
       accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }}
       disabled={disabled || loading}
       onPress={onPress}
-      style={({ pressed }) => [
+      containerStyle={[{ alignSelf: fullWidth ? 'stretch' : 'center' }, style]}
+      style={[
         {
           flexDirection: 'row',
           alignItems: 'center',
@@ -63,12 +65,8 @@ export function Button({
           // Disabled: solid muted fill with readable text, not a faded colour.
           backgroundColor: disabled ? colors.surfaceContainerHighest : colors[v.bg],
           boxShadow: disabled ? undefined : v.shadow,
-          opacity: pressed ? 0.9 : 1,
-          transform: [{ scale: pressed ? 0.98 : 1 }],
-          alignSelf: fullWidth ? 'stretch' : 'center',
           ...sizes[size],
         },
-        style,
       ]}
     >
       {loading ? (
@@ -82,7 +80,7 @@ export function Button({
           {icon ? <Icon name={icon} size={18} color={disabled ? 'tertiary' : v.fg} filled={iconFilled} /> : null}
         </>
       )}
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -111,12 +109,14 @@ export function IconButton({
   style?: StyleProp<ViewStyle>;
 }) {
   return (
-    <Pressable
+    <PressableScale
+      scaleTo={0.92}
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
       hitSlop={size < 44 ? (44 - size) / 2 : 0}
-      style={({ pressed }) => [
+      containerStyle={style}
+      style={[
         {
           width: size,
           height: size,
@@ -125,13 +125,10 @@ export function IconButton({
           justifyContent: 'center',
           backgroundColor: colors[bg],
           boxShadow: shadow,
-          opacity: pressed ? 0.7 : 1,
-          transform: [{ scale: pressed ? 0.95 : 1 }],
         },
-        style,
       ]}
     >
       <Icon name={icon} size={iconSize} color={color} filled={filled} />
-    </Pressable>
+    </PressableScale>
   );
 }

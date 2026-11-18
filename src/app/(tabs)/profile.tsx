@@ -1,7 +1,9 @@
 import { Pressable, View } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { Card, Eyebrow, Icon, IconBadge, Pill, Screen, Text, type IconName } from '@/components';
+import Animated, { useReducedMotion } from 'react-native-reanimated';
+import { Card, Eyebrow, Icon, IconBadge, Pill, PressableScale, Screen, Text, type IconName } from '@/components';
+import { CSS_EASE_OUT } from '@/lib/motion';
 import { ageOf } from '@/components/profile/sections';
 import { intentLabel } from '@/constants/intents';
 import { profileCompletion } from '@/features/onboarding/completion';
@@ -15,7 +17,11 @@ const LINKS: { icon: IconName; title: string; body: string; href: '/treats' | '/
 ];
 
 /** Profile, with a completion card for everything onboarding let people skip. */
+// The completion bar fills from the left once, when the profile opens.
+const FILL = { from: { transform: [{ scaleX: 0 }] }, to: { transform: [{ scaleX: 1 }] } } as const;
+
 export default function MyProfile() {
+  const reduced = useReducedMotion();
   const { draft } = useOnboarding();
   // Demo: fall back to the sample profile until onboarding has been filled in.
   const name = draft.firstName?.trim() || MOCK_ME.firstName;
@@ -27,7 +33,14 @@ export default function MyProfile() {
   return (
     <Screen back={false} bottomInset={false}>
       <View style={{ alignItems: 'center', gap: spacing.md }}>
-        <Image source={MOCK_ME.photos[0]?.source} style={{ width: 112, height: 112, borderRadius: 56 }} contentFit="cover" accessibilityLabel="Your photo" />
+        <PressableScale
+          scaleTo={0.96}
+          onPress={() => router.push({ pathname: '/photos', params: { profileId: 'me' } })}
+          accessibilityRole="imagebutton"
+          accessibilityLabel="Your photo. Opens all your photos."
+        >
+          <Image source={MOCK_ME.photos[0]?.source} style={{ width: 112, height: 112, borderRadius: 56, borderWidth: 3, borderColor: colors.surfaceContainerLowest }} contentFit="cover" />
+        </PressableScale>
         <View style={{ alignItems: 'center', gap: spacing.xs }}>
           <Text variant="headlineXl" accessibilityRole="header">
             {name}
@@ -55,7 +68,12 @@ export default function MyProfile() {
             accessibilityValue={{ min: 0, max: 100, now: percent }}
             style={{ height: 8, borderRadius: 4, backgroundColor: colors.surfaceContainerHighest, overflow: 'hidden' }}
           >
-            <View style={{ width: `${percent}%`, height: 8, borderRadius: 4, backgroundColor: colors.primaryContainer }} />
+            <Animated.View
+              style={[
+                { width: `${percent}%`, height: 8, borderRadius: 4, backgroundColor: colors.primaryContainer, transformOrigin: 'left' },
+                reduced ? null : { animationName: FILL, animationDuration: 700, animationTimingFunction: CSS_EASE_OUT },
+              ]}
+            />
           </View>
           <Text variant="labelMd" color="tertiary" style={{ fontFamily: fonts.sansMedium, fontSize: 14, lineHeight: 20 }}>
             Complete profiles get more thoughtful likes. Do it at your own pace.

@@ -6,7 +6,7 @@
 import { View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Card, Icon, IconBadge, IconButton, Pill, Text, Waveform, type IconName } from '@/components';
+import { Card, Icon, IconBadge, IconButton, Pill, PressableScale, Text, Waveform, type IconName } from '@/components';
 import { INSTITUTIONS, LANGUAGES } from '@/constants/ghana';
 import { intentLabel } from '@/constants/intents';
 import { promptById, slotOfPrompt } from '@/constants/prompts';
@@ -21,7 +21,7 @@ export const ageOf = (birth: string) => {
 
 const glassButton = { bg: 'surfaceBright' as ColorName, shadow: shadows.lg };
 
-export function HeroPhotoCard({ profile, onLike }: { profile: Profile; onLike: () => void }) {
+export function HeroPhotoCard({ profile, onLike, onOpenPhotos }: { profile: Profile; onLike: () => void; onOpenPhotos?: () => void }) {
   const photo = profile.photos[0];
   const pills: { icon: IconName; label: string; warm?: boolean; iconColor?: ColorName }[] = [
     { icon: 'apartment', label: [profile.neighborhood, profile.city].filter(Boolean).join(', ') },
@@ -31,14 +31,31 @@ export function HeroPhotoCard({ profile, onLike }: { profile: Profile; onLike: (
   ];
   return (
     <Card rounded="xl" padding="none" shadow="md" style={{ overflow: 'hidden' }}>
-      <View style={{ aspectRatio: 3 / 4, backgroundColor: colors.surfaceDim }}>
-        {photo ? <Image source={photo.source} contentFit="cover" style={{ flex: 1 }} accessibilityLabel={`Photo of ${profile.firstName}`} transition={200} /> : null}
+      <PressableScale
+        scaleTo={0.99}
+        disabled={!onOpenPhotos}
+        onPress={onOpenPhotos}
+        accessibilityRole="imagebutton"
+        accessibilityLabel={`Photo of ${profile.firstName}. Opens all ${profile.photos.length} photos.`}
+        style={{ aspectRatio: 3 / 4, backgroundColor: colors.surfaceDim }}
+      >
+        {photo ? <Image source={photo.source} contentFit="cover" style={{ flex: 1 }} transition={200} /> : null}
         <LinearGradient
           colors={['rgba(0,0,0,0.2)', colors.transparent, alpha(colors.onSurface, 0.8)]}
           locations={[0, 0.45, 1]}
           style={{ position: 'absolute', inset: 0 }}
           pointerEvents="none"
         />
+        {profile.photos.length > 1 ? (
+          <Pill
+            label={`1/${profile.photos.length}`}
+            icon="photo_library"
+            iconColor="surfaceContainerLowest"
+            color="surfaceContainerLowest"
+            bg="rgba(10, 8, 5, 0.45)"
+            style={{ position: 'absolute', top: 16, right: 16 }}
+          />
+        ) : null}
         {profile.verification === 'verified' ? (
           <Pill label="Selfie Verified" icon="verified_user" iconColor="primary" color="onSurface" bg={alpha(colors.surfaceBright, 0.95)} style={{ position: 'absolute', top: 16, left: 16, boxShadow: shadows.sm }} />
         ) : null}
@@ -58,7 +75,7 @@ export function HeroPhotoCard({ profile, onLike }: { profile: Profile; onLike: (
           ) : null}
         </View>
         <IconButton icon="favorite" label={`Like ${profile.firstName}'s photo`} size={48} iconSize={24} color="onSurfaceVariant" {...glassButton} filled={false} onPress={onLike} style={{ position: 'absolute', right: 16, bottom: 16 }} />
-      </View>
+      </PressableScale>
       <View style={{ padding: spacing.md, flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
         {pills.map((p) => (
           <Pill
@@ -169,13 +186,20 @@ export function TextPromptCard({ prompt, onLike }: { prompt: ProfilePrompt; onLi
   );
 }
 
-export function PhotoCard({ photo, firstName, onLike }: { photo: Photo; firstName: string; onLike: () => void }) {
+export function PhotoCard({ photo, firstName, onLike, onOpen }: { photo: Photo; firstName: string; onLike: () => void; onOpen?: () => void }) {
   return (
     <Card rounded="xl" padding="none" shadow="md" style={{ overflow: 'hidden' }}>
-      <View style={{ aspectRatio: 4 / 3, backgroundColor: colors.surfaceDim }}>
-        <Image source={photo.source} contentFit="cover" style={{ flex: 1 }} accessibilityLabel={photo.caption ?? `Photo of ${firstName}`} transition={200} />
+      <PressableScale
+        scaleTo={0.99}
+        disabled={!onOpen}
+        onPress={onOpen}
+        accessibilityRole="imagebutton"
+        accessibilityLabel={`${photo.caption ?? `Photo of ${firstName}`}. Opens the photo viewer.`}
+        style={{ aspectRatio: 4 / 3, backgroundColor: colors.surfaceDim }}
+      >
+        <Image source={photo.source} contentFit="cover" style={{ flex: 1 }} transition={200} />
         <IconButton icon="favorite" label="Like this photo" size={48} iconSize={24} color="onSurfaceVariant" {...glassButton} filled={false} onPress={onLike} style={{ position: 'absolute', right: 16, bottom: 16 }} />
-      </View>
+      </PressableScale>
       {photo.caption ? (
         <View style={{ padding: spacing.md }}>
           <Text italic>{photo.caption}</Text>

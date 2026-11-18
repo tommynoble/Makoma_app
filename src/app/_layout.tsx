@@ -15,6 +15,8 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useReducedMotion } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { OnboardingProvider } from '@/features/onboarding/onboarding-context';
 import { colors, fonts } from '@/theme';
@@ -22,6 +24,8 @@ import { colors, fonts } from '@/theme';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  // With Reduce Motion on, screens crossfade instead of sliding.
+  const reduced = useReducedMotion();
   // Runtime loading works in Expo Go and on web. For store builds, also embed
   // these with the expo-font config plugin so they are ready at launch.
   const [loaded, error] = useFonts({
@@ -46,12 +50,14 @@ export default function RootLayout() {
   if (!loaded && !error) return null;
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <SafeAreaProvider>
       <OnboardingProvider>
         <StatusBar style="dark" />
         <Stack
           screenOptions={{
             headerShown: false,
+            animation: reduced ? 'fade' : 'default',
             contentStyle: { backgroundColor: colors.surface },
             headerStyle: { backgroundColor: colors.surface },
             headerTintColor: colors.onSurface,
@@ -70,11 +76,13 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen name="chat/[matchId]" options={{ headerShown: true, title: '' }} />
+          <Stack.Screen name="photos" options={{ presentation: 'modal', contentStyle: { backgroundColor: colors.onSurface } }} />
           <Stack.Screen name="edit-prompts" options={{ headerShown: true, title: 'Your prompts' }} />
           <Stack.Screen name="treats" options={{ headerShown: true, title: 'My treats' }} />
           <Stack.Screen name="settings/privacy" options={{ headerShown: true, title: 'Privacy' }} />
         </Stack>
       </OnboardingProvider>
     </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

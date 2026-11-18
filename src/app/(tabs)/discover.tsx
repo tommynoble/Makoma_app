@@ -3,7 +3,9 @@ import { ScrollView, View } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Card, Icon, IconButton, Pill, Text, Wordmark } from '@/components';
+import Animated from 'react-native-reanimated';
+import { Button, Card, Enter, Icon, IconButton, Pill, Skeleton, Text, Wordmark } from '@/components';
+import { haptic, TOAST_IN, TOAST_OUT } from '@/lib/motion';
 import { HeroPhotoCard, PhotoCard, SharedGroundCard, TextPromptCard, ValuesCard, VoicePromptCard } from '@/components/profile/sections';
 import { fetchDiscover, likeProfile, passProfile } from '@/features/api';
 import { MOCK_ME } from '@/features/mock-data';
@@ -60,13 +62,19 @@ export default function Discover() {
   const reply = (params: { kind: 'voice' | 'prompt' | 'photo'; promptId?: string }) =>
     current && router.push({ pathname: '/reply', params: { profileId: current.profile.id, ...params } });
 
+  const openPhotos = (index: number) =>
+    current && router.push({ pathname: '/photos', params: { profileId: current.profile.id, index: String(index) } });
+
   const onPass = () => {
     if (!current) return;
+    haptic.light();
     passProfile(current.profile.id).catch(() => {});
     next(`Passed on ${current.profile.firstName}`);
   };
   const onLike = (rose = false) => {
     if (!current) return;
+    if (rose) haptic.medium();
+    else haptic.light();
     likeProfile(current.profile.id, { rose }).catch(() => {});
     next(rose ? `Rose sent to ${current.profile.firstName}. They will see it first.` : `You liked ${current.profile.firstName}`);
   };
@@ -84,8 +92,13 @@ export default function Discover() {
       </View>
 
       {status === 'loading' ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Text color="tertiary">Finding people who want what you want…</Text>
+        <View accessibilityLabel="Loading profiles" style={{ flex: 1, paddingTop: spacing.md, paddingHorizontal: spacing.margin, gap: spacing.lg, width: '100%', maxWidth: maxContentWidth, alignSelf: 'center' }}>
+          <Skeleton height={20} width="45%" />
+          <Skeleton height={440} rounded="xl" />
+          <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+            <Skeleton height={34} width={120} rounded="full" />
+            <Skeleton height={34} width={150} rounded="full" />
+          </View>
         </View>
       ) : status === 'error' ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl }}>
@@ -144,15 +157,19 @@ export default function Discover() {
                 <Pill label={`${cards.length} to meet`} dot="primary" color="primary" bg={alpha(colors.primaryContainer, 0.2)} uppercase />
               </View>
 
-              <HeroPhotoCard profile={current.profile} onLike={() => reply({ kind: 'photo' })} />
+              <Enter key={current.profile.id} variant="fade" style={{ gap: spacing.lg }}>
+              <HeroPhotoCard profile={current.profile} onLike={() => reply({ kind: 'photo' })} onOpenPhotos={() => openPhotos(0)} />
               <SharedGroundCard profile={current.profile} shared={current.shared} />
               {current.profile.voicePrompt ? <VoicePromptCard profile={current.profile} voice={current.profile.voicePrompt} onLike={() => reply({ kind: 'voice' })} /> : null}
               {current.profile.prompts[0] ? <TextPromptCard prompt={current.profile.prompts[0]} onLike={() => reply({ kind: 'prompt', promptId: current.profile.prompts[0].promptId })} /> : null}
-              {current.profile.photos[1] ? <PhotoCard photo={current.profile.photos[1]} firstName={current.profile.firstName} onLike={() => reply({ kind: 'photo' })} /> : null}
+              {current.profile.photos[1] ? (
+                <PhotoCard photo={current.profile.photos[1]} firstName={current.profile.firstName} onLike={() => reply({ kind: 'photo' })} onOpen={() => openPhotos(1)} />
+              ) : null}
               {current.profile.prompts.slice(1).map((p) => (
                 <TextPromptCard key={p.promptId} prompt={p} onLike={() => reply({ kind: 'prompt', promptId: p.promptId })} />
               ))}
               <ValuesCard profile={current.profile} />
+              </Enter>
             </View>
           </ScrollView>
 
@@ -164,15 +181,15 @@ export default function Discover() {
         </>
       )}
 
-      {toast ? (
-        <View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 76, left: 0, right: 0, alignItems: 'center', zIndex: 3 }}>
-          <View accessibilityLiveRegion="polite" style={{ backgroundColor: colors.inverseSurface, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 999, boxShadow: shadows.xl, maxWidth: '86%' }}>
+      <View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 76, left: 0, right: 0, alignItems: 'center', zIndex: 3 }}>
+        {toast ? (
+          <Animated.View key={toast} entering={TOAST_IN} exiting={TOAST_OUT} accessibilityLiveRegion="polite" style={{ backgroundColor: colors.inverseSurface, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 999, boxShadow: shadows.xl, maxWidth: '86%' }}>
             <Text variant="labelMd" color="inverseOnSurface" center>
               {toast}
             </Text>
-          </View>
-        </View>
-      ) : null}
+          </Animated.View>
+        ) : null}
+      </View>
     </View>
   );
 }

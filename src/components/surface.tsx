@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
-import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
+import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { colors, radius, shadows, spacing, type ColorName } from '@/theme';
 import { Icon, type IconName } from './icon';
+import { PressableScale } from './pressable-scale';
 import { Text } from './text';
 
 /** Rounded surface the designs build everything from. Content goes in as children. */
@@ -13,6 +14,7 @@ export function Card({
   shadow = 'sm',
   onPress,
   accessibilityLabel,
+  accessibilityRole = 'button',
   selected,
   style,
 }: {
@@ -23,6 +25,8 @@ export function Card({
   shadow?: keyof typeof shadows | 'none';
   onPress?: () => void;
   accessibilityLabel?: string;
+  /** 'radio' for one-of-many option cards (announced as a radio button with checked state). */
+  accessibilityRole?: 'button' | 'radio';
   selected?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
@@ -37,15 +41,16 @@ export function Card({
   };
   if (!onPress) return <View style={[base, style]}>{children}</View>;
   return (
-    <Pressable
-      accessibilityRole="button"
+    <PressableScale
+      scaleTo={0.98}
+      accessibilityRole={accessibilityRole}
       accessibilityLabel={accessibilityLabel}
-      accessibilityState={selected === undefined ? undefined : { selected }}
+      accessibilityState={selected === undefined ? undefined : accessibilityRole === 'radio' ? { checked: selected } : { selected }}
       onPress={onPress}
-      style={({ pressed }) => [base, { opacity: pressed ? 0.92 : 1, transform: [{ scale: pressed ? 0.99 : 1 }] }, style]}
+      style={[base, style]}
     >
       {children}
-    </Pressable>
+    </PressableScale>
   );
 }
 

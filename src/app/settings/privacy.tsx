@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { Button, Card, IconBadge, RadioMark, Text } from '@/components';
 import { formatCedis, SACHET_PLANS } from '@/constants/ghana';
+import { haptic } from '@/lib/motion';
 import { colors, maxContentWidth, spacing } from '@/theme';
 
 /**
@@ -25,7 +26,10 @@ export default function Privacy() {
       </View>
       <View accessibilityRole="radiogroup" style={{ gap: spacing.md }}>
         {plans.map((p) => (
-          <Card key={p.id} bg={plan === p.id ? 'surfaceContainerHigh' : 'surfaceContainerLowest'} selected={plan === p.id} onPress={() => setPlan(p.id)} accessibilityLabel={`${p.label}, ${formatCedis(p.pricePesewas)}`} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+          <Card key={p.id} bg={plan === p.id ? 'surfaceContainerHigh' : 'surfaceContainerLowest'} accessibilityRole="radio" selected={plan === p.id} onPress={() => {
+              if (plan !== p.id) haptic.select();
+              setPlan(p.id);
+            }} accessibilityLabel={`${p.label}, ${formatCedis(p.pricePesewas)}`} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
             <View style={{ flex: 1 }}>
               <Text variant="labelLg">{p.label}</Text>
               <Text color="tertiary">{formatCedis(p.pricePesewas)}</Text>

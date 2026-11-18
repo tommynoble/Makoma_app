@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Card, Eyebrow, Field, Icon, IconButton, Text } from '@/components';
 import { PROMPT_SLOTS, promptById } from '@/constants/prompts';
 import { useOnboarding } from '@/features/onboarding/onboarding-context';
+import { haptic } from '@/lib/motion';
 import { colors, fonts, maxContentWidth, radius, spacing } from '@/theme';
 
 /**
@@ -99,7 +100,10 @@ export default function EditPrompts() {
                             key={id}
                             accessibilityRole="radio"
                             accessibilityState={{ selected: on }}
-                            onPress={() => setSlot(slot.id, { promptId: id })}
+                            onPress={() => {
+                              if (!on) haptic.select();
+                              setSlot(slot.id, { promptId: id });
+                            }}
                             style={{ paddingHorizontal: spacing.md, minHeight: 40, justifyContent: 'center', borderRadius: radius.full, backgroundColor: on ? colors.secondary : colors.surfaceContainerHigh }}
                           >
                             <Text variant="labelMd" color={on ? 'onSecondary' : 'onSurface'} numberOfLines={1} style={{ maxWidth: 280, fontFamily: fonts.sansSemiBold }}>

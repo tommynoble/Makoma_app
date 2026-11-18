@@ -5,6 +5,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Button, Card, Heading, Icon, Screen, Text } from '@/components';
 import { submitSelfieVerification } from '@/features/api';
 import { useOnboarding } from '@/features/onboarding/onboarding-context';
+import { haptic } from '@/lib/motion';
 import { isBackendConfigured } from '@/lib/supabase';
 import { colors, fonts, radius, spacing } from '@/theme';
 
@@ -40,6 +41,7 @@ export default function Selfie() {
       const photo = await camera.current?.takePictureAsync({ quality: 0.7 });
       if (!photo) throw new Error('Could not take the photo. Please try again.');
       if (isBackendConfigured) await submitSelfieVerification(photo.uri, pose);
+      haptic.success();
       update({ selfieSubmitted: true });
     } catch (e: any) {
       setError(e?.message ?? 'Something went wrong. Please try again.');

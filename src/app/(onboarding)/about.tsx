@@ -3,13 +3,16 @@ import { router } from 'expo-router';
 import { Button, Eyebrow, Field, Heading, Screen, Text } from '@/components';
 import { INSTITUTIONS } from '@/constants/ghana';
 import { useOnboarding } from '@/features/onboarding/onboarding-context';
+import { haptic } from '@/lib/motion';
 import { colors, fonts, radius, spacing } from '@/theme';
 
 /** Work, direction and schools (shared roots). */
 export default function About() {
   const { draft, update } = useOnboarding();
-  const toggle = (id: string) =>
+  const toggle = (id: string) => {
+    haptic.select();
     update({ institutionIds: draft.institutionIds.includes(id) ? draft.institutionIds.filter((x) => x !== id) : [...draft.institutionIds, id] });
+  };
 
   return (
     <Screen step={3} footer={<Button title="Continue" disabled={!draft.firstName?.trim() || !draft.occupation?.trim()} onPress={() => router.push('/selfie')} />}>

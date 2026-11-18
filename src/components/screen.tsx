@@ -1,9 +1,10 @@
-import type { ReactNode } from 'react';
+import { Children, type ReactNode } from 'react';
 import { KeyboardAvoidingView, ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, maxContentWidth, shadows, spacing } from '@/theme';
 import { IconButton } from './button';
+import { Enter } from './enter';
 import { ProgressSegments } from './surface';
 import { Text } from './text';
 
@@ -36,6 +37,7 @@ export function Screen({
   footer,
   scroll = true,
   bottomInset = true,
+  animateIn,
 }: {
   children: ReactNode;
   /** Onboarding step number; shows the segmented progress bar. */
@@ -45,11 +47,19 @@ export function Screen({
   footer?: ReactNode;
   scroll?: boolean;
   bottomInset?: boolean;
+  /** Stagger the content blocks in on mount. Defaults to on for onboarding steps; off for tabs (visited constantly). */
+  animateIn?: boolean;
 }) {
   const insets = useSafeAreaInsets();
   const body = (
     <View style={{ width: '100%', maxWidth: maxContentWidth, alignSelf: 'center', paddingHorizontal: step ? spacing.lg : spacing.margin, gap: spacing.section }}>
-      {children}
+      {animateIn ?? !!step
+        ? Children.toArray(children).map((child, i) => (
+            <Enter key={i} index={i}>
+              {child}
+            </Enter>
+          ))
+        : children}
     </View>
   );
   return (

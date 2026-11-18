@@ -1,16 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Pressable, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Card, Icon, IconButton, Text, Waveform } from '@/components';
+import { Button, Card, Enter, Icon, IconButton, Text, Waveform } from '@/components';
 import { GiftButton, TreatUnlockBanner } from '@/components/gift-button';
 import { formatCedis } from '@/constants/ghana';
 import { fetchGiftOffers, fetchGiftUnlock, sendText, sendVoiceNote, startGift, subscribeToMessages } from '@/features/api';
 import { computeGiftUnlock } from '@/features/gifts/unlock';
 import { mockProfileById } from '@/features/mock-data';
 import { useVoiceRecorder } from '@/features/voice/use-voice-recorder';
+import { haptic, TOAST_IN, TOAST_OUT } from '@/lib/motion';
 import { isBackendConfigured } from '@/lib/supabase';
 import { colors, radius, shadows, spacing, type } from '@/theme';
 import type { GiftOffer, GiftUnlock, Message } from '@/types/domain';
@@ -56,6 +58,13 @@ export default function Chat() {
   // Local count keeps the indicator responsive; the server decides at purchase time.
   const localUnlock = useMemo(() => computeGiftUnlock(messages), [messages]);
   const unlock = serverUnlock ?? localUnlock;
+
+  // The moment treats unlock is rare and earned: mark it with a success haptic.
+  const wasUnlocked = useRef(unlock.unlocked);
+  useEffect(() => {
+    if (unlock.unlocked && !wasUnlocked.current) haptic.success();
+    wasUnlocked.current = unlock.unlocked;
+  }, [unlock.unlocked]);
   const offer = offers.find((o) => o.id === selected);
 
   const appendLocal = (m: Local<Message>) =>
@@ -65,6 +74,7 @@ export default function Chat() {
     const body = text.trim();
     if (!body) return;
     setText('');
+    haptic.light();
     try {
       if (isBackendConfigured) await sendText(matchId, body);
       else appendLocal({ kind: 'text', body });
@@ -78,6 +88,7 @@ export default function Chat() {
     if (!rec.isRecording) return rec.start();
     const clip = await rec.stop();
     if (!clip) return;
+    haptic.light();
     try {
       if (isBackendConfigured) await sendVoiceNote(matchId, clip.uri, clip.durationMs);
       else appendLocal({ kind: 'voice', audioUrl: clip.uri, durationMs: clip.durationMs });
@@ -88,6 +99,7 @@ export default function Chat() {
 
   const onPay = async () => {
     if (!offer) return;
+    haptic.medium();
     setShowTray(false);
     if (!isBackendConfigured) {
       setNotice(`Demo: ${other.firstName} would receive a ${offer.label} voucher for ${offer.partnerName}, ${offer.area}.`);
@@ -143,7 +155,9 @@ export default function Chat() {
         contentContainerStyle={{ padding: spacing.margin, gap: spacing.md }}
         ListHeaderComponent={
           <View style={{ gap: spacing.md }}>
-            <TreatUnlockBanner unlock={unlock} />
+            <Enter key={unlock.unlocked ? 'unlocked' : 'locked'} variant="fade">
+              <TreatUnlockBanner unlock={unlock} />
+            </Enter>
             <View style={{ flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start', paddingHorizontal: spacing.xs }}>
               <Icon name="shield" size={16} color="tertiary" style={{ marginTop: 1 }} />
               <Text variant="labelSm" color="tertiary" style={{ flex: 1, fontFamily: 'PlusJakartaSans_500Medium', lineHeight: 16 }}>
@@ -195,14 +209,17 @@ export default function Chat() {
       />
 
       {notice ? (
+        <Animated.View entering={TOAST_IN} exiting={TOAST_OUT}>
         <Pressable accessibilityRole="button" accessibilityLabel="Dismiss message" onPress={() => setNotice(null)} style={{ marginHorizontal: spacing.margin, marginBottom: spacing.sm, padding: 12, borderRadius: radius.md, backgroundColor: colors.surfaceContainerHigh }}>
           <Text variant="labelMd" color="onSurfaceVariant" selectable>
             {notice}
           </Text>
         </Pressable>
+        </Animated.View>
       ) : null}
 
       {showTray ? (
+        <Animated.View entering={TOAST_IN} exiting={TOAST_OUT}>
         <Card rounded="lg" shadow="xl" style={{ marginHorizontal: spacing.sm, marginBottom: spacing.sm, gap: spacing.md }}>
           <Text variant="labelSm" color="secondary" uppercase>
             Send a treat
@@ -217,7 +234,10 @@ export default function Chat() {
                   key={o.id}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: on }}
-                  onPress={() => setSelected(o.id)}
+                  onPress={() => {
+                    if (!on) haptic.select();
+                    setSelected(o.id);
+                  }}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -246,21 +266,12 @@ export default function Chat() {
               );
             })}
           </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ disabled: !offer }}
-            disabled={!offer}
-            onPress={onPay}
-            style={{ height: 52, borderRadius: radius.full, backgroundColor: colors.primaryContainer, alignItems: 'center', justifyContent: 'center', opacity: offer ? 1 : 0.5 }}
-          >
-            <Text variant="labelLg" color="onPrimary">
-              {offer ? `Pay ${formatCedis(offer.pricePesewas)} with MoMo` : 'Choose a treat'}
-            </Text>
-          </Pressable>
+          <Button title={offer ? `Pay ${formatCedis(offer.pricePesewas)} with MoMo` : 'Choose a treat'} disabled={!offer} onPress={onPay} />
           <Text variant="labelSm" color="tertiary" center style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
             Voucher valid for 30 days · Redeemable only at this partner
           </Text>
         </Card>
+        </Animated.View>
       ) : null}
 
       <View style={{ flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: Math.max(insets.bottom, spacing.sm), alignItems: 'center', backgroundColor: colors.surface, boxShadow: shadows.tabBar }}>

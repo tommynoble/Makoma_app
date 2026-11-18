@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
-import { Button, Card, Eyebrow, Heading, Icon, Screen, Text, Toggle } from '@/components';
+import { Button, Card, Eyebrow, Heading, Icon, Pop, Screen, Text, Toggle } from '@/components';
+import { haptic } from '@/lib/motion';
 import { NEIGHBORHOODS } from '@/constants/ghana';
 import { INTENTS } from '@/constants/intents';
 import { useOnboarding } from '@/features/onboarding/onboarding-context';
@@ -26,22 +27,27 @@ export default function Intentions() {
               padding="margin"
               shadow="warm"
               bg={selected ? 'surfaceContainerLow' : 'surfaceContainerLowest'}
-              selected={selected}
+              accessibilityRole="radio" selected={selected}
               accessibilityLabel={`${i.label}. ${i.description}`}
-              onPress={() => update({ intent: i.id })}
+              onPress={() => {
+                if (!selected) haptic.select();
+                update({ intent: i.id });
+              }}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: spacing.md,
-                borderWidth: selected ? 2 : 1,
+                borderWidth: 2,
                 borderColor: selected ? colors.secondary : colors.hairline,
               }}
             >
               <Text variant="labelLg" style={{ flex: 1, fontSize: 16, lineHeight: 22, fontFamily: selected ? fonts.sansBold : fonts.sansSemiBold }}>
                 {i.label}
               </Text>
-              {selected ? <Icon name="check_circle" size={24} color="secondary" /> : <View style={{ width: 24 }} />}
+              <Pop on={selected}>
+                <Icon name="check_circle" size={24} color="secondary" />
+              </Pop>
             </Card>
           );
         })}
@@ -73,6 +79,7 @@ export default function Intentions() {
                     accessibilityRole="button"
                     accessibilityState={{ selected: active }}
                     onPress={() => {
+                      haptic.select();
                       update({ city: n.city, neighborhood: n.area });
                       setOpen(false);
                     }}
