@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Icon, type IconName } from '@/components';
+import { haptic } from '@/lib/motion';
 import { colors, fonts, shadows } from '@/theme';
 
 const TABS: { name: string; title: string; icon: IconName }[] = [
@@ -12,6 +13,7 @@ const TABS: { name: string; title: string; icon: IconName }[] = [
 export default function TabsLayout() {
   return (
     <Tabs
+      screenListeners={{ tabPress: () => haptic.select() }}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,

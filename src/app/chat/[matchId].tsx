@@ -1,30 +1,22 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { FlatList, KeyboardAvoidingView, Pressable, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Card, Enter, Icon, IconButton, Text, Waveform } from '@/components';
+import { Button, Card, Enter, Icon, IconButton, PressableScale, Text, VoiceBubble } from '@/components';
 import { GiftButton, TreatUnlockBanner } from '@/components/gift-button';
 import { formatCedis } from '@/constants/ghana';
 import { fetchGiftOffers, fetchGiftUnlock, sendText, sendVoiceNote, startGift, subscribeToMessages } from '@/features/api';
 import { computeGiftUnlock } from '@/features/gifts/unlock';
 import { mockProfileById } from '@/features/mock-data';
+import { useSocial } from '@/features/social/social-store';
 import { useVoiceRecorder } from '@/features/voice/use-voice-recorder';
 import { haptic, TOAST_IN, TOAST_OUT } from '@/lib/motion';
 import { isBackendConfigured } from '@/lib/supabase';
 import { colors, radius, shadows, spacing, type } from '@/theme';
 import type { GiftOffer, GiftUnlock, Message } from '@/types/domain';
-
-type Local<T> = T extends Message ? Omit<T, 'id' | 'matchId' | 'senderId' | 'createdAt'> : never;
-
-// Demo conversation: two voice notes already exchanged, so one more unlocks treats.
-const DEMO: Message[] = [
-  { id: 'd1', matchId: 'demo', senderId: 'them', kind: 'text', body: 'Kwame, I am still recovering from our last debate. Are you genuinely telling me East Legon has better kelewele than Osu? Be serious!', createdAt: '' },
-  { id: 'd2', matchId: 'demo', senderId: 'me', kind: 'voice', audioUrl: '', durationMs: 14000, createdAt: '' },
-  { id: 'd3', matchId: 'demo', senderId: 'them', kind: 'voice', audioUrl: '', durationMs: 19000, createdAt: '' },
-];
 
 /**
  * Chat: text, voice notes and treats. Treats are partner vouchers (never
@@ -34,9 +26,14 @@ const DEMO: Message[] = [
 export default function Chat() {
   const insets = useSafeAreaInsets();
   const { matchId } = useLocalSearchParams<{ matchId: string }>();
+  const social = useSocial();
+  const match = social.state.matches[matchId];
   // TODO: load the match's profile from the backend.
-  const other = mockProfileById('akosua')!;
-  const [messages, setMessages] = useState<Message[]>(isBackendConfigured ? [] : DEMO);
+  const other = mockProfileById(match?.profileId ?? matchId?.replace(/^m-/, ''));
+  const [remote, setRemote] = useState<Message[]>([]);
+  const messages = useMemo(() => (isBackendConfigured ? remote : (social.state.messages[matchId] ?? [])), [remote, social.state.messages, matchId]);
+  const typing = social.typingIn === matchId;
+  const list = useRef<ComponentRef<typeof FlatList<Message>>>(null);
   const [serverUnlock, setServerUnlock] = useState<GiftUnlock | null>(null);
   const [offers, setOffers] = useState<GiftOffer[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -50,7 +47,7 @@ export default function Chat() {
     if (!isBackendConfigured || !matchId) return;
     fetchGiftUnlock(matchId).then(setServerUnlock).catch(() => {});
     return subscribeToMessages(matchId, (m) => {
-      setMessages((prev) => [...prev, m]);
+      setRemote((prev) => [...prev, m]);
       fetchGiftUnlock(matchId).then(setServerUnlock).catch(() => {});
     });
   }, [matchId]);
@@ -67,8 +64,18 @@ export default function Chat() {
   }, [unlock.unlocked]);
   const offer = offers.find((o) => o.id === selected);
 
-  const appendLocal = (m: Local<Message>) =>
-    setMessages((prev) => [...prev, { ...m, id: `local-${prev.length}`, matchId, senderId: 'me', createdAt: new Date().toISOString() } as Message]);
+  useEffect(() => {
+    const t = setTimeout(() => list.current?.scrollToEnd({ animated: true }), 60);
+    return () => clearTimeout(t);
+  }, [messages.length, typing]);
+
+  if (!other) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl, backgroundColor: colors.surface }}>
+        <Text color="tertiary">This conversation is no longer available.</Text>
+      </View>
+    );
+  }
 
   const onSend = async () => {
     const body = text.trim();
@@ -77,7 +84,7 @@ export default function Chat() {
     haptic.light();
     try {
       if (isBackendConfigured) await sendText(matchId, body);
-      else appendLocal({ kind: 'text', body });
+      else social.send(matchId, { kind: 'text', body });
     } catch {
       setText(body);
       setNotice('Message not sent. Check your connection and try again.');
@@ -91,7 +98,7 @@ export default function Chat() {
     haptic.light();
     try {
       if (isBackendConfigured) await sendVoiceNote(matchId, clip.uri, clip.durationMs);
-      else appendLocal({ kind: 'voice', audioUrl: clip.uri, durationMs: clip.durationMs });
+      else social.send(matchId, { kind: 'voice', audioUrl: clip.uri, durationMs: clip.durationMs });
     } catch {
       setNotice('Voice note not sent. Check your connection and try again.');
     }
@@ -102,7 +109,10 @@ export default function Chat() {
     haptic.medium();
     setShowTray(false);
     if (!isBackendConfigured) {
-      setNotice(`Demo: ${other.firstName} would receive a ${offer.label} voucher for ${offer.partnerName}, ${offer.area}.`);
+      haptic.success();
+      social.send(matchId, { kind: 'gift', giftId: `g-${offer.id}-${messages.length}`, offerId: offer.id });
+      setSelected(null);
+      setNotice(`Demo payment done. ${other.firstName} gets a ${offer.label} voucher for ${offer.partnerName}, ${offer.area}. No cash changes hands.`);
       return;
     }
     try {
@@ -132,7 +142,7 @@ export default function Chat() {
       <Stack.Screen
         options={{
           headerTitle: () => (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+            <PressableScale onPress={() => router.push(`/person/${other.id}`)} accessibilityRole="button" accessibilityLabel={`View ${other.firstName}'s profile`} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
               <Image source={other.photos[0]?.source} style={{ width: 36, height: 36, borderRadius: 18 }} contentFit="cover" />
               <View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -145,11 +155,12 @@ export default function Chat() {
                   {other.neighborhood}, {other.city}
                 </Text>
               </View>
-            </View>
+            </PressableScale>
           ),
         }}
       />
       <FlatList
+        ref={list}
         data={messages}
         keyExtractor={(m) => m.id}
         contentContainerStyle={{ padding: spacing.margin, gap: spacing.md }}
@@ -165,6 +176,17 @@ export default function Chat() {
               </Text>
             </View>
           </View>
+        }
+        ListFooterComponent={
+          typing ? (
+            <Enter variant="fade">
+              <View accessibilityLabel={`${other.firstName} is typing`} style={[bubble(false), { flexDirection: 'row', gap: 5, paddingVertical: 16 }]}>
+                {[0, 1, 2].map((i) => (
+                  <View key={i} style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: colors.control, opacity: 0.5 + i * 0.25 }} />
+                ))}
+              </View>
+            </Enter>
+          ) : undefined
         }
         ListEmptyComponent={
           <Text color="tertiary" center>
@@ -185,14 +207,8 @@ export default function Chat() {
           }
           if (item.kind === 'voice') {
             return (
-              <View style={[bubble(mine), { flexDirection: 'row', alignItems: 'center', gap: 12, minWidth: 220 }]} accessibilityLabel={`Voice note, ${Math.round(item.durationMs / 1000)} seconds`}>
-                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: mine ? colors.onPrimary : colors.secondary, alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon name="play_arrow" size={22} color={mine ? 'primary' : 'onSecondary'} filled />
-                </View>
-                <Waveform seed={item.id} count={18} height={28} restColor={mine ? 'primaryFixedDim' : 'outlineVariant'} />
-                <Text variant="labelSm" color={fg}>
-                  0:{String(Math.round(item.durationMs / 1000)).padStart(2, '0')}
-                </Text>
+              <View style={bubble(mine)}>
+                <VoiceBubble id={item.id} uri={item.audioUrl || undefined} durationMs={item.durationMs} mine={mine} />
               </View>
             );
           }
@@ -266,7 +282,7 @@ export default function Chat() {
               );
             })}
           </View>
-          <Button title={offer ? `Pay ${formatCedis(offer.pricePesewas)} with MoMo` : 'Choose a treat'} disabled={!offer} onPress={onPay} />
+          <Button title={offer ? `Pay ${formatCedis(offer.pricePesewas)} with MoMo` : 'Choose a treat'} haptics="none" disabled={!offer} onPress={onPay} />
           <Text variant="labelSm" color="tertiary" center style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
             Voucher valid for 30 days · Redeemable only at this partner
           </Text>

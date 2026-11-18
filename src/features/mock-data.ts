@@ -1,9 +1,9 @@
-import type { DiscoverCard, GiftOffer, Profile, Voucher } from '@/types/domain';
+import type { DiscoverCard, GiftOffer, IncomingLike, Profile, Voucher } from '@/types/domain';
 import { computeSharedGround } from './discover/shared-ground';
 
 /**
- * Demo data used while the backend isn't configured. Photos are AI-generated
- * placeholders from the Stitch design project, not real people.
+ * Demo data used while the backend isn't configured. All photos are
+ * AI-generated placeholders (Stitch / Higgsfield), not real people.
  */
 export const MOCK_ME: Profile = {
   id: 'me',
@@ -20,13 +20,23 @@ export const MOCK_ME: Profile = {
   languages: ['en', 'tw'],
   church: 'Methodist',
   prompts: [],
-  photos: [{ id: 'me1', source: require('../../assets/mock/kwame.jpg'), position: 0 }],
+  photos: [
+    { id: 'me1', source: require('../../assets/mock/kwame.jpg'), position: 0 },
+    { id: 'me2', source: require('../../assets/mock/kwame-2.jpg'), caption: 'Sunday football with the boys', position: 1 },
+  ],
   verification: 'verified',
   visibility: 'public',
   createdAt: '2026-01-01T00:00:00Z',
 };
 
-const others: Profile[] = [
+export interface DemoProfile extends Profile {
+  /** Set when this person has already liked the user. */
+  likesYou?: IncomingLike;
+  /** Canned replies used by the demo chat. */
+  replies: string[];
+}
+
+export const MOCK_PROFILES: DemoProfile[] = [
   {
     id: 'akosua',
     firstName: 'Akosua',
@@ -62,6 +72,51 @@ const others: Profile[] = [
     verification: 'verified',
     visibility: 'public',
     createdAt: '2026-05-01T00:00:00Z',
+    likesYou: { at: '2026-11-10T18:20:00Z', liked: 'voice', comment: 'Your voice note made me laugh. Which kenkey spot is yours?' },
+    replies: [
+      'Haha okay, I hear you. But you still owe me a proper kelewele tour.',
+      'That’s sweet. How was work today?',
+      'Send me a voice note, I want to hear how you say that 😄',
+      'Saturday works for me. Somewhere in Osu?',
+    ],
+  },
+  {
+    id: 'nana',
+    firstName: 'Nana Ama',
+    birthDate: '1998-02-14',
+    gender: 'woman',
+    interestedIn: ['man'],
+    intent: 'serious',
+    occupation: 'Product Strategist',
+    headline: 'Product Strategist • Accra & London',
+    industry: 'Tech',
+    church: 'Anglican',
+    drinks: 'socially',
+    heritage: 'Akuapem • London',
+    institutionIds: ['ashesi', 'achimota'],
+    neighborhood: 'East Legon',
+    city: 'Accra',
+    hideExactDistance: true,
+    languages: ['en', 'tw'],
+    voicePrompt: {
+      promptText: 'What home means after years abroad…',
+      durationMs: 16_000,
+      transcript: 'London taught me hustle, Accra taught me how to rest. Home is wherever the jollof is honest…',
+    },
+    prompts: [
+      { promptId: 'detty_december', answer: 'Two weddings, one beach day in Ada, and absolutely no work emails.' },
+      { promptId: 'five_years', answer: 'Running product at a fintech that makes MoMo savings feel effortless.' },
+      { promptId: 'jollof_dealbreaker', answer: 'If you think Nigerian jollof wins, we can still be friends. Just friends.' },
+    ],
+    photos: [
+      { id: 'n1', source: require('../../assets/mock/nana-1.jpg'), position: 0 },
+      { id: 'n2', source: require('../../assets/mock/nana-2.jpg'), caption: 'Autumn in London, missing the sun', position: 1 },
+    ],
+    verification: 'verified',
+    visibility: 'public',
+    createdAt: '2026-08-01T00:00:00Z',
+    likesYou: { at: '2026-11-17T09:12:00Z', liked: 'prompt', promptId: 'five_years', comment: 'A fellow builder! What are you working on?', rose: true },
+    replies: ['Ah nice! I love that.', 'Tell me more, I’m curious.', 'Haha, you’re funny. When are you free this week?'],
   },
   {
     id: 'efia',
@@ -89,19 +144,132 @@ const others: Profile[] = [
       { promptId: 'building_now', answer: 'A small design studio, and a savings plan my mother finally approves of.' },
       { promptId: 'banku_vs_fufu', answer: 'Banku. With okro. On a Friday. This is not up for debate.' },
     ],
-    photos: [{ id: 'e1', source: require('../../assets/mock/efia.jpg'), position: 0 }],
+    photos: [
+      { id: 'e1', source: require('../../assets/mock/efia.jpg'), position: 0 },
+      { id: 'e2', source: require('../../assets/mock/efia-2.jpg'), caption: 'Mood boards and too much coffee at the studio', position: 1 },
+    ],
     verification: 'verified',
     visibility: 'public',
     createdAt: '2026-06-01T00:00:00Z',
+    likesYou: { at: '2026-11-16T20:45:00Z', liked: 'photo', comment: 'Okay, that football photo… do you actually score?' },
+    replies: ['Haha, prove it then!', 'I love that. What else do you do for fun?', 'Labone this weekend? I’ll bring the plantain.'],
+  },
+  {
+    id: 'abena',
+    firstName: 'Abena',
+    birthDate: '1996-04-09',
+    gender: 'woman',
+    interestedIn: ['man'],
+    intent: 'marriage',
+    occupation: 'Paediatric Doctor',
+    headline: 'Paediatric Doctor • Korle Bu',
+    industry: 'Health',
+    church: 'Catholic',
+    drinks: 'never',
+    heritage: 'Ho • Accra',
+    institutionIds: ['ug', 'wesley_girls'],
+    neighborhood: 'Cantonments',
+    city: 'Accra',
+    hideExactDistance: true,
+    languages: ['ee', 'en', 'tw'],
+    voicePrompt: {
+      promptText: 'After a long shift, I recharge by…',
+      durationMs: 19_000,
+      transcript: 'A walk on Labadi beach at sunset, my mother’s light soup, and one episode of something silly…',
+    },
+    prompts: [
+      { promptId: 'sunday_kenkey', answer: 'Teshie, after Mass, with plenty of shito. My little brother always finishes mine.' },
+      { promptId: 'respect', answer: 'Showing up when you said you would. Small promises are big promises.' },
+      { promptId: 'aunty_question', answer: '“Soon, Auntie.” And then I quickly offer to serve the food.' },
+    ],
+    photos: [
+      { id: 'b1', source: require('../../assets/mock/abena-1.jpg'), position: 0 },
+      { id: 'b2', source: require('../../assets/mock/abena-2.jpg'), caption: 'Labadi at sunset, my reset button', position: 1 },
+    ],
+    verification: 'verified',
+    visibility: 'public',
+    createdAt: '2026-07-01T00:00:00Z',
+    replies: ['Thank you! That’s kind.', 'Haha, I like your energy.', 'I’m off on Sunday if you want to grab kenkey.'],
+  },
+  {
+    id: 'adjoa',
+    firstName: 'Adjoa',
+    birthDate: '1999-09-01',
+    gender: 'woman',
+    interestedIn: ['man'],
+    intent: 'serious',
+    occupation: 'Architect',
+    headline: 'Architect • Designing homes that breathe',
+    industry: 'Engineering',
+    drinks: 'socially',
+    heritage: 'Tema • Kumasi',
+    institutionIds: ['knust', 'yaa_asantewaa'],
+    neighborhood: 'Community 25',
+    city: 'Tema',
+    languages: ['tw', 'en', 'ga'],
+    voicePrompt: {
+      promptText: 'A building in Ghana I wish I designed…',
+      durationMs: 15_000,
+      transcript: 'The National Theatre. It looks like it is about to fly, and it makes everyone look up…',
+    },
+    prompts: [
+      { promptId: 'waakye_order', answer: 'Waakye, gari, wele, boiled egg, small spaghetti. And yes, extra shito.' },
+      { promptId: 'proud_of', answer: 'My first house design is now a real home for a family in Tema.' },
+      { promptId: 'trotro_story', answer: 'A mate who sang every stop like it was a gospel concert. 10/10.' },
+    ],
+    photos: [
+      { id: 'd1', source: require('../../assets/mock/adjoa-1.jpg'), position: 0 },
+      { id: 'd2', source: require('../../assets/mock/adjoa-2.jpg'), caption: 'Deadline week, still smiling', position: 1 },
+    ],
+    verification: 'pending',
+    visibility: 'public',
+    createdAt: '2026-09-01T00:00:00Z',
+    replies: ['Haha, KNUST represent!', 'What kind of buildings do you love?', 'Tema is not that far, you know 😄'],
+  },
+  {
+    id: 'esi',
+    firstName: 'Esi',
+    birthDate: '1995-01-22',
+    gender: 'woman',
+    interestedIn: ['man'],
+    intent: 'marriage',
+    occupation: 'Corporate Lawyer',
+    headline: 'Corporate Lawyer • Labone',
+    industry: 'Law',
+    church: 'Presbyterian',
+    drinks: 'socially',
+    heritage: 'Elmina • Accra',
+    institutionIds: ['ug', 'holy_child'],
+    neighborhood: 'Labone',
+    city: 'Accra',
+    languages: ['fat', 'en', 'ga'],
+    voicePrompt: {
+      promptText: 'The best advice my grandmother gave me…',
+      durationMs: 17_000,
+      transcript: '“Never shout to be heard. Speak clearly, and let your work be loud.” I still live by it…',
+    },
+    prompts: [
+      { promptId: 'family_role', answer: 'The one who organises every funeral and wedding committee. Spreadsheets included.' },
+      { promptId: 'green_flag', answer: 'You remember the small things I mention in passing.' },
+      { promptId: 'banku_vs_fufu', answer: 'Fufu with light soup. Banku people are welcome, but they sit at the back.' },
+    ],
+    photos: [
+      { id: 's1', source: require('../../assets/mock/esi-1.jpg'), position: 0 },
+      { id: 's2', source: require('../../assets/mock/esi-2.jpg'), caption: 'Sunday brunch is sacred', position: 1 },
+    ],
+    verification: 'verified',
+    visibility: 'public',
+    createdAt: '2026-04-01T00:00:00Z',
+    replies: ['Thank you, that’s thoughtful.', 'Haha, you have to defend that properly.', 'I’d like that. Brunch on Sunday?'],
   },
 ];
 
-export const MOCK_CARDS: DiscoverCard[] = others.map((profile) => ({
-  profile,
-  shared: computeSharedGround(MOCK_ME, profile),
-}));
+export const mockProfileById = (id: string) => MOCK_PROFILES.find((p) => p.id === id);
 
-export const mockProfileById = (id: string) => others.find((p) => p.id === id);
+export const toCard = (profile: Profile, me: Profile = MOCK_ME): DiscoverCard => ({ profile, shared: computeSharedGround(me, profile) });
+
+/** Kept for the API fallback (src/features/api.ts). */
+export const MOCK_CARDS: DiscoverCard[] = MOCK_PROFILES.map((p) => toCard(p));
 
 /** Placeholder partners (fictional names); mirrors supabase/seed.sql. */
 export const MOCK_GIFT_OFFERS: GiftOffer[] = [

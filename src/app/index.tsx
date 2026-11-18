@@ -1,6 +1,8 @@
 import { Redirect } from 'expo-router';
+import { useOnboarding } from '@/features/onboarding/onboarding-context';
 
-// TODO: route to /discover when a session with a completed profile exists.
+/** Returning users go straight to Discover; new users start at sign-in. */
 export default function Index() {
-  return <Redirect href="/phone" />;
+  const { draft } = useOnboarding();
+  return <Redirect href={draft.onboarded ? '/discover' : '/phone'} />;
 }

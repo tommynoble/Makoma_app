@@ -1,9 +1,12 @@
-import { createContext, use, useState, type ReactNode } from 'react';
+import { createContext, use, type ReactNode } from 'react';
 import type { VoiceClip } from '@/features/voice/use-voice-recorder';
-import type { IntentId } from '@/types/domain';
+import { usePersistentState } from '@/lib/persist';
+import type { IntentId, LanguageId } from '@/types/domain';
 
+/** The signed-in user's own profile (demo: saved on the device). */
 export interface OnboardingDraft {
   phone?: string;
+  onboarded: boolean;
   pledgeAccepted: boolean;
   intent?: IntentId;
   city: string;
@@ -13,6 +16,12 @@ export interface OnboardingDraft {
   occupation?: string;
   lifeGoals?: string;
   institutionIds: string[];
+  languages: LanguageId[];
+  church?: string;
+  drinks?: 'never' | 'socially' | 'regularly';
+  heritage?: string;
+  /** Photos the user added (local URIs). Empty = demo photos. */
+  photos: (string | number)[];
   /** One answer per prompt slot, keyed by slot id. */
   prompts: Record<string, { promptId: string; answer: string }>;
   voicePromptText?: string;
@@ -20,21 +29,28 @@ export interface OnboardingDraft {
   selfieSubmitted: boolean;
 }
 
+export const ME_KEY = 'makoma.me.v1';
+
 const initial: OnboardingDraft = {
+  onboarded: false,
   pledgeAccepted: false,
   city: 'Accra',
   neighborhood: 'East Legon',
   hideExactDistance: true,
   institutionIds: [],
+  languages: ['en'],
+  photos: [],
   prompts: {},
   selfieSubmitted: false,
 };
 
-const Ctx = createContext<{ draft: OnboardingDraft; update: (patch: Partial<OnboardingDraft>) => void } | null>(null);
+const Ctx = createContext<{ draft: OnboardingDraft; update: (patch: Partial<OnboardingDraft>) => void; reset: () => void; hydrated: boolean } | null>(null);
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
-  const [draft, setDraft] = useState(initial);
-  return <Ctx value={{ draft, update: (patch) => setDraft((d) => ({ ...d, ...patch })) }}>{children}</Ctx>;
+  const [draft, setDraft, hydrated] = usePersistentState(ME_KEY, initial);
+  return (
+    <Ctx value={{ draft, hydrated, update: (patch) => setDraft((d) => ({ ...d, ...patch })), reset: () => setDraft(initial) }}>{children}</Ctx>
+  );
 }
 
 export function useOnboarding() {

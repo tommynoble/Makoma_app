@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Button, Card, Heading, IconButton, Screen, Text, Waveform } from '@/components';
+import { haptic } from '@/lib/motion';
 import { useOnboarding } from '@/features/onboarding/onboarding-context';
 import { useVoiceRecorder, VOICE_INTRO_MAX_MS } from '@/features/voice/use-voice-recorder';
 import { colors, fonts, shadows, spacing } from '@/theme';
@@ -19,8 +20,13 @@ const clock = (ms: number) => `0:${String(Math.floor(ms / 1000)).padStart(2, '0'
 export default function Voice() {
   const { from } = useLocalSearchParams<{ from?: string }>();
   const fromProfile = from === 'profile';
-  const finish = () => (fromProfile ? router.back() : router.replace('/discover'));
   const { draft, update } = useOnboarding();
+  const finish = () => {
+    if (fromProfile) return router.back();
+    update({ onboarded: true });
+    haptic.success();
+    router.replace('/discover');
+  };
   const rec = useVoiceRecorder(VOICE_INTRO_MAX_MS);
   const [suggestion, setSuggestion] = useState(0);
   const [elapsed, setElapsed] = useState(0);

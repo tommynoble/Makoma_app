@@ -8,3 +8,6 @@ export * from './waveform';
 export * from './pressable-scale';
 export * from './skeleton';
 export * from './enter';
+export * from './code-input';
+export * from './voice-bubble';
+export * from './chip';

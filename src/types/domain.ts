@@ -83,6 +83,16 @@ export interface SharedGround {
   sameIntent: boolean;
 }
 
+/** Demo only: this person has already liked the user (drives the Likes tab and instant matches). */
+export interface IncomingLike {
+  at: string;
+  promptId?: string;
+  comment?: string;
+  rose?: boolean;
+  /** What they liked, shown on the Likes card. */
+  liked: 'photo' | 'voice' | 'prompt';
+}
+
 export interface DiscoverCard {
   profile: Profile;
   shared: SharedGround;

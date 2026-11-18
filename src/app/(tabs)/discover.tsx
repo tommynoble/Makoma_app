@@ -1,82 +1,74 @@
-import { useEffect, useRef, useState, type ComponentRef } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { ScrollView, View } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
-import { Button, Card, Enter, Icon, IconButton, Pill, Skeleton, Text, Wordmark } from '@/components';
-import { haptic, TOAST_IN, TOAST_OUT } from '@/lib/motion';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Button, Card, Enter, Icon, IconButton, Pill, PressableScale, Skeleton, Text, Wordmark } from '@/components';
 import { HeroPhotoCard, PhotoCard, SharedGroundCard, TextPromptCard, ValuesCard, VoicePromptCard } from '@/components/profile/sections';
-import { fetchDiscover, likeProfile, passProfile } from '@/features/api';
-import { MOCK_ME } from '@/features/mock-data';
+import { buildDeck } from '@/features/discover/deck';
+import { useMyProfile } from '@/features/me';
+import { toCard } from '@/features/mock-data';
 import { profileCompletion } from '@/features/onboarding/completion';
 import { useOnboarding } from '@/features/onboarding/onboarding-context';
+import { DEFAULT_FILTERS, useSocial } from '@/features/social/social-store';
+import { haptic, TOAST_IN, TOAST_OUT } from '@/lib/motion';
 import { alpha, colors, maxContentWidth, shadows, spacing } from '@/theme';
-import type { DiscoverCard, DiscoverFilters } from '@/types/domain';
-
-const FILTERS: DiscoverFilters = { intents: ['marriage', 'serious', 'friendship_networking'], minAge: 21, maxAge: 45, verifiedOnly: false, languages: [], institutionIds: [] };
-
-type Load = 'loading' | 'ready' | 'error';
 
 /**
  * One profile at a time, read top to bottom like an editorial page. No
- * swiping: you like a specific photo or answer, pass, or send a rose.
+ * swiping: like a specific photo or answer, pass, or send a rose.
  */
 export default function Discover() {
   const insets = useSafeAreaInsets();
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
-  const [cards, setCards] = useState<DiscoverCard[]>([]);
-  const [status, setStatus] = useState<Load>('loading');
-  const [toast, setToast] = useState<string | null>(null);
+  const social = useSocial();
+  const me = useMyProfile();
   const { draft } = useOnboarding();
-  const completion = profileCompletion({ ...draft, firstName: draft.firstName || MOCK_ME.firstName, intent: draft.intent ?? MOCK_ME.intent }).percent;
+  const [toast, setToast] = useState<string | null>(null);
+  const [warming, setWarming] = useState(true);
 
-  const load = () =>
-    fetchDiscover(FILTERS)
-      .then((c) => {
-        setCards(c);
-        setStatus('ready');
-      })
-      .catch(() => setStatus('error'));
-  const refresh = () => {
-    setStatus('loading');
-    load();
-  };
+  // A short skeleton on first open (the real backend will take a moment).
   useEffect(() => {
-    load();
+    const t = setTimeout(() => setWarming(false), 450);
+    return () => clearTimeout(t);
   }, []);
-
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 2200);
     return () => clearTimeout(t);
   }, [toast]);
 
-  const current = cards[0];
-  const next = (message: string) => {
-    setToast(message);
-    setCards((c) => c.slice(1));
-    scroll.current?.scrollTo({ y: 0, animated: false });
-  };
+  const deck = useMemo(() => buildDeck(social.state), [social.state]);
+  const current = deck[0] ? toCard(deck[0], me) : undefined;
+  const completion = profileCompletion({ ...draft, firstName: me.firstName, intent: me.intent }).percent;
+  const filtersOn = JSON.stringify(social.state.filters) !== JSON.stringify(DEFAULT_FILTERS);
 
   const reply = (params: { kind: 'voice' | 'prompt' | 'photo'; promptId?: string }) =>
     current && router.push({ pathname: '/reply', params: { profileId: current.profile.id, ...params } });
+  const openPhotos = (index: number) => current && router.push({ pathname: '/photos', params: { profileId: current.profile.id, index: String(index) } });
 
-  const openPhotos = (index: number) =>
-    current && router.push({ pathname: '/photos', params: { profileId: current.profile.id, index: String(index) } });
-
+  const advance = (message?: string) => {
+    if (message) setToast(message);
+    scroll.current?.scrollTo({ y: 0, animated: false });
+  };
   const onPass = () => {
     if (!current) return;
     haptic.light();
-    passProfile(current.profile.id).catch(() => {});
-    next(`Passed on ${current.profile.firstName}`);
+    social.pass(current.profile.id);
+    advance(`Passed on ${current.profile.firstName}`);
   };
   const onLike = (rose = false) => {
     if (!current) return;
-    if (rose) haptic.medium();
+    const name = current.profile.firstName;
+    const matchId = social.like(current.profile.id, { rose });
+    if (matchId) haptic.success();
+    else if (rose) haptic.medium();
     else haptic.light();
-    likeProfile(current.profile.id, { rose }).catch(() => {});
-    next(rose ? `Rose sent to ${current.profile.firstName}. They will see it first.` : `You liked ${current.profile.firstName}`);
+    if (matchId) {
+      advance();
+      router.push(`/match/${matchId}`);
+    } else advance(rose ? `Rose sent to ${name}. They’ll see it first.` : `You liked ${name}`);
   };
 
   return (
@@ -85,13 +77,18 @@ export default function Discover() {
         <View style={{ height: 64, paddingHorizontal: spacing.margin, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
           <Wordmark />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-            <IconButton icon="tune" label="Filter preferences" iconSize={24} onPress={() => setToast('Filters are coming soon')} />
-            <Image source={MOCK_ME.photos[0]?.source} style={{ width: 32, height: 32, borderRadius: 16 }} contentFit="cover" accessibilityLabel="Your profile" />
+            <View>
+              <IconButton icon="tune" label={filtersOn ? 'Filters (on)' : 'Filters'} iconSize={24} onPress={() => router.push('/filters')} />
+              {filtersOn ? <View style={{ position: 'absolute', top: 8, right: 8, width: 9, height: 9, borderRadius: 5, backgroundColor: colors.secondary, borderWidth: 1.5, borderColor: colors.surface }} /> : null}
+            </View>
+            <PressableScale scaleTo={0.92} onPress={() => router.push('/profile')} accessibilityRole="button" accessibilityLabel="Your profile">
+              <Image source={me.photos[0]?.source} style={{ width: 34, height: 34, borderRadius: 17 }} contentFit="cover" />
+            </PressableScale>
           </View>
         </View>
       </View>
 
-      {status === 'loading' ? (
+      {warming ? (
         <View accessibilityLabel="Loading profiles" style={{ flex: 1, paddingTop: spacing.md, paddingHorizontal: spacing.margin, gap: spacing.lg, width: '100%', maxWidth: maxContentWidth, alignSelf: 'center' }}>
           <Skeleton height={20} width="45%" />
           <Skeleton height={440} rounded="xl" />
@@ -100,27 +97,17 @@ export default function Discover() {
             <Skeleton height={34} width={150} rounded="full" />
           </View>
         </View>
-      ) : status === 'error' ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl }}>
-          <Text variant="headlineMd" center>
-            We couldn’t load profiles.
-          </Text>
-          <Text color="tertiary" center>
-            Check your connection and try again.
-          </Text>
-          <Button title="Try again" icon="refresh" fullWidth={false} onPress={refresh} />
-        </View>
       ) : !current ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl }}>
-          <Icon name="spa" size={40} color="primaryContainer" />
+        <Enter style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl }}>
+          <Icon name="spa" size={44} color="primaryContainer" />
           <Text variant="headlineMd" center>
-            You’re all caught up.
+            {filtersOn ? 'No one matches these filters yet.' : 'You’re all caught up.'}
           </Text>
           <Text color="tertiary" center>
-            New people join every day. Take your time with the conversations you have.
+            {filtersOn ? 'Try widening your age range or languages.' : 'New people join every day. Take your time with the conversations you have.'}
           </Text>
-          <Button title="Start over" variant="tonal" size="md" fullWidth={false} onPress={refresh} />
-        </View>
+          {filtersOn ? <Button title="Adjust filters" fullWidth={false} onPress={() => router.push('/filters')} /> : <Button title="Go to matches" variant="tonal" fullWidth={false} onPress={() => router.push('/matches')} />}
+        </Enter>
       ) : (
         <>
           <ScrollView ref={scroll} contentContainerStyle={{ paddingTop: spacing.md, paddingBottom: 112 }}>
@@ -148,34 +135,29 @@ export default function Discover() {
                   <Text variant="labelMd" numberOfLines={1}>
                     {current.profile.city} • {current.profile.neighborhood}
                   </Text>
-                  {!current.profile.hideExactDistance && current.distanceKm != null ? (
-                    <Text variant="labelSm" color="tertiary">
-                      ({Math.round(current.distanceKm)} km)
-                    </Text>
-                  ) : null}
                 </View>
-                <Pill label={`${cards.length} to meet`} dot="primary" color="primary" bg={alpha(colors.primaryContainer, 0.2)} uppercase />
+                <Pill label={`${deck.length} to meet`} dot="primary" color="primary" bg={alpha(colors.primaryContainer, 0.2)} uppercase />
               </View>
 
               <Enter key={current.profile.id} variant="fade" style={{ gap: spacing.lg }}>
-              <HeroPhotoCard profile={current.profile} onLike={() => reply({ kind: 'photo' })} onOpenPhotos={() => openPhotos(0)} />
-              <SharedGroundCard profile={current.profile} shared={current.shared} />
-              {current.profile.voicePrompt ? <VoicePromptCard profile={current.profile} voice={current.profile.voicePrompt} onLike={() => reply({ kind: 'voice' })} /> : null}
-              {current.profile.prompts[0] ? <TextPromptCard prompt={current.profile.prompts[0]} onLike={() => reply({ kind: 'prompt', promptId: current.profile.prompts[0].promptId })} /> : null}
-              {current.profile.photos[1] ? (
-                <PhotoCard photo={current.profile.photos[1]} firstName={current.profile.firstName} onLike={() => reply({ kind: 'photo' })} onOpen={() => openPhotos(1)} />
-              ) : null}
-              {current.profile.prompts.slice(1).map((p) => (
-                <TextPromptCard key={p.promptId} prompt={p} onLike={() => reply({ kind: 'prompt', promptId: p.promptId })} />
-              ))}
-              <ValuesCard profile={current.profile} />
+                <HeroPhotoCard profile={current.profile} onLike={() => reply({ kind: 'photo' })} onOpenPhotos={() => openPhotos(0)} />
+                <SharedGroundCard profile={current.profile} shared={current.shared} />
+                {current.profile.voicePrompt ? <VoicePromptCard profile={current.profile} voice={current.profile.voicePrompt} onLike={() => reply({ kind: 'voice' })} /> : null}
+                {current.profile.prompts[0] ? <TextPromptCard prompt={current.profile.prompts[0]} onLike={() => reply({ kind: 'prompt', promptId: current.profile.prompts[0].promptId })} /> : null}
+                {current.profile.photos[1] ? (
+                  <PhotoCard photo={current.profile.photos[1]} firstName={current.profile.firstName} onLike={() => reply({ kind: 'photo' })} onOpen={() => openPhotos(1)} />
+                ) : null}
+                {current.profile.prompts.slice(1).map((p) => (
+                  <TextPromptCard key={p.promptId} prompt={p} onLike={() => reply({ kind: 'prompt', promptId: p.promptId })} />
+                ))}
+                <ValuesCard profile={current.profile} />
               </Enter>
             </View>
           </ScrollView>
 
           <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom: spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.lg }}>
-            <IconButton icon="close" label={`Pass on ${current.profile.firstName}`} size={56} iconSize={28} bg="surfaceBright" color="onSurfaceVariant" shadow={shadows.xl} onPress={onPass} />
-            <Button title="Send Rose" variant="warm" size="md" iconLeft="eco" fullWidth={false} onPress={() => onLike(true)} />
+            <IconButton icon="close" label={`Pass on ${current.profile.firstName}`} size={56} iconSize={28} bg="surfaceContainerLowest" color="onSurfaceVariant" shadow={shadows.xl} onPress={onPass} />
+            <Button title="Send Rose" variant="warm" size="md" iconLeft="eco" fullWidth={false} haptics="none" onPress={() => onLike(true)} />
             <IconButton icon="favorite" label={`Like ${current.profile.firstName}`} filled size={56} iconSize={28} bg="primary" color="onPrimary" shadow={shadows.xl} onPress={() => onLike()} />
           </View>
         </>

@@ -6,7 +6,8 @@ import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconButton, Text } from '@/components';
 import { ageOf } from '@/components/profile/sections';
-import { MOCK_ME, mockProfileById } from '@/features/mock-data';
+import { useMyProfile } from '@/features/me';
+import { mockProfileById } from '@/features/mock-data';
 import { CSS_EASE_OUT, durations } from '@/lib/motion';
 import { colors, fonts, radius, spacing } from '@/theme';
 
@@ -20,7 +21,8 @@ export default function Photos() {
   const { width, height } = useWindowDimensions();
   const { profileId, index: start } = useLocalSearchParams<{ profileId: string; index?: string }>();
   // TODO: load from the backend when configured.
-  const profile = profileId === 'me' ? MOCK_ME : mockProfileById(profileId);
+  const me = useMyProfile();
+  const profile = profileId === 'me' ? me : mockProfileById(profileId);
   const photos = profile?.photos ?? [];
   const [index, setIndex] = useState(Math.min(Number(start ?? 0) || 0, Math.max(photos.length - 1, 0)));
 

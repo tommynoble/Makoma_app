@@ -7,6 +7,7 @@ import { Button, Icon, IconButton, Pill, Text } from '@/components';
 import { ageOf } from '@/components/profile/sections';
 import { promptById } from '@/constants/prompts';
 import { likeProfile } from '@/features/api';
+import { useSocial } from '@/features/social/social-store';
 import { mockProfileById } from '@/features/mock-data';
 import { useVoiceRecorder, VOICE_REPLY_MAX_MS } from '@/features/voice/use-voice-recorder';
 import { haptic } from '@/lib/motion';
@@ -23,6 +24,7 @@ export default function Reply() {
   const { profileId, kind, promptId } = useLocalSearchParams<{ profileId: string; kind: 'voice' | 'prompt' | 'photo'; promptId?: string }>();
   // TODO: load the profile from the backend when configured.
   const profile = mockProfileById(profileId);
+  const social = useSocial();
   const [note, setNote] = useState('');
   const [rose, setRose] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -57,11 +59,18 @@ export default function Reply() {
   const send = async (withNote: boolean) => {
     setBusy(true);
     setError(null);
-    if (rose) haptic.medium();
-    else haptic.light();
     try {
-      await likeProfile(profile.id, { promptId, comment: withNote ? note : undefined, rose });
-      router.back();
+      const opts = { promptId, comment: withNote && note.trim() ? note.trim() : undefined, rose };
+      await likeProfile(profile.id, opts);
+      const matchId = social.like(profile.id, opts);
+      if (matchId) {
+        haptic.success();
+        router.replace(`/match/${matchId}`);
+      } else {
+        if (rose) haptic.medium();
+        else haptic.light();
+        router.back();
+      }
     } catch (e: any) {
       setError(e?.message ?? 'Could not send. Please try again.');
       setBusy(false);
@@ -181,8 +190,8 @@ export default function Reply() {
       ) : null}
 
       <View style={{ gap: spacing.sm }}>
-        <Button title={hasReply ? 'Send Like & Comment' : 'Send Like'} icon="arrow_forward" loading={busy} onPress={() => send(true)} />
-        {hasReply ? <Button title="Send like only" variant="tonal" size="md" disabled={busy} onPress={() => send(false)} /> : null}
+        <Button title={hasReply ? 'Send Like & Comment' : 'Send Like'} haptics="none" icon="arrow_forward" loading={busy} onPress={() => send(true)} />
+        {hasReply ? <Button title="Send like only" variant="tonal" size="md" haptics="none" disabled={busy} onPress={() => send(false)} /> : null}
       </View>
     </ScrollView>
   );

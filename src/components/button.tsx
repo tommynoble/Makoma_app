@@ -2,6 +2,7 @@ import { ActivityIndicator, type StyleProp, type ViewStyle } from 'react-native'
 import { colors, fonts, radius, shadows, spacing, type ColorName } from '@/theme';
 import { Icon, type IconName } from './icon';
 import { PressableScale } from './pressable-scale';
+import { haptic } from '@/lib/motion';
 import { Text } from './text';
 
 const variants = {
@@ -31,6 +32,7 @@ export function Button({
   disabled,
   loading,
   fullWidth = true,
+  haptics,
   style,
 }: {
   title: string;
@@ -44,16 +46,22 @@ export function Button({
   disabled?: boolean;
   loading?: boolean;
   fullWidth?: boolean;
+  /** Tactile tick on press. Defaults to light for filled buttons; pass 'none' when the action plays its own. */
+  haptics?: 'light' | 'medium' | 'none';
   style?: StyleProp<ViewStyle>;
 }) {
   const v = variants[variant];
+  const feel = haptics ?? (variant === 'tonal' ? 'none' : 'light');
   return (
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={title}
       accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }}
       disabled={disabled || loading}
-      onPress={onPress}
+      onPress={() => {
+        if (feel !== 'none') haptic[feel]();
+        onPress?.();
+      }}
       containerStyle={[{ alignSelf: fullWidth ? 'stretch' : 'center' }, style]}
       style={[
         {

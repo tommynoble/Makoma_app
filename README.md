@@ -6,6 +6,9 @@ treats redeemable at partner spots (paid with MoMo) and incognito mode for profe
 See **[docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md)** for the full product vision and how each
 feature maps to code.
 
+> **Demo state:** profile, likes, matches and messages persist on the device (AsyncStorage,
+> `src/features/social/social-store.tsx`). "Log out & reset demo" on the Profile tab starts over.
+>
 > **Status:** first working prototype, built from the Stitch designs ("Warm Editorial Trust").
 > Runs on demo data until Supabase keys are added. Previews: `docs/prototype-screens-1.png`, `-2.png`.
 >
@@ -39,6 +42,11 @@ src/
     chat/[matchId]     text, voice notes, treats (locked until the chat is real)
     treats             vouchers you have received (QR codes)
     settings/privacy   incognito sachet passes
+    filters            Discover filters (intent, age, language, verified only)
+    match/[matchId]    "It's a match" screen
+    person/[id]        full profile of someone who liked you / a match
+    edit-profile       photos (image picker, up to 6) and every profile field
+    photos             full-screen photo viewer
   components/          design-system kit (Text, Button, Card, Pill, Icon, Screen…) + profile sections
   constants/           intents, culturally rooted prompts, Ghana data (schools, languages, sachet pricing)
   features/            data access (api.ts), voice recorder, shared-ground ranking, onboarding state
