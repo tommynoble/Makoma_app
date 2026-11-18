@@ -226,7 +226,7 @@ export default function Chat() {
                     paddingHorizontal: spacing.md,
                     borderRadius: radius.md,
                     borderCurve: 'continuous',
-                    backgroundColor: on ? colors.secondaryFixed : colors.surfaceContainerLow,
+                    backgroundColor: on ? colors.secondaryFixed : colors.surfaceContainerHigh,
                     borderWidth: 1.5,
                     borderColor: on ? colors.secondary : colors.transparent,
                   }}

@@ -31,7 +31,7 @@ export default function Matches() {
               2m ago
             </Text>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surfaceContainerLow, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surfaceContainerHigh, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 }}>
             <Icon name="play_arrow" size={20} color="secondary" filled />
             <Waveform seed="d3" count={16} height={22} />
             <Text variant="labelSm" color="secondary">

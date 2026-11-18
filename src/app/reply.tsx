@@ -96,7 +96,7 @@ export default function Reply() {
       </View>
 
       {quoteTitle ? (
-        <View style={{ padding: spacing.md, gap: spacing.sm, borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: colors.surfaceContainerLow, borderWidth: 1, borderColor: alpha(colors.surfaceContainerHighest, 0.8) }}>
+        <View style={{ padding: spacing.md, gap: spacing.sm, borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: colors.surfaceContainerHigh, borderWidth: 1, borderColor: alpha(colors.surfaceContainerHighest, 0.8) }}>
           {kind === 'voice' ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Pill label="Voice Prompt" dot="primaryContainer" color="primary" bg="surfaceContainerLowest" uppercase />
@@ -134,7 +134,7 @@ export default function Reply() {
             placeholderTextColor={colors.tertiaryContainer}
             style={{ ...type.bodyMd, color: colors.onSurface, minHeight: 72, textAlignVertical: 'top' }}
           />
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.surfaceContainerLow }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.surfaceContainerHigh }}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={rec.isRecording ? 'Stop recording voice reply' : 'Record a voice reply, up to 20 seconds'}
@@ -161,7 +161,7 @@ export default function Reply() {
         ) : null}
       </View>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: 12, paddingVertical: 10, borderRadius: radius.md, backgroundColor: colors.surfaceContainerLow }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: 12, paddingVertical: 10, borderRadius: radius.md, backgroundColor: colors.surfaceContainerHigh }}>
         <Icon name="forum" size={18} color="tertiary" />
         <Text variant="labelMd" color="tertiary" style={{ flex: 1, fontFamily: 'PlusJakartaSans_500Medium' }}>
           A specific comment starts a far better conversation than a like on its own.

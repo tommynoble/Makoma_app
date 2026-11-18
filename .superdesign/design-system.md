@@ -34,10 +34,11 @@ Avoid: neon, gamification, purple/pink gradients, generic dating-app chrome, con
 ## Colour (light mode only, "Bold Editorial Intent" v4; all text pairs pass WCAG AA)
 | Role | Hex |
 |---|---|
-| Canvas | `#FFF8F5` |
+| Canvas (warm sand; white cards stand out 1.2:1) | `#F3E9E1` |
 | Card | `#FFFFFF` (1px hairline `rgba(10,8,5,.06)`) |
-| Cream card / selected bg | `#FFF1E8` |
-| Chip | `#F5E5DC` |
+| Tint panel on canvas / selected bg | `#FFF7F2` |
+| Pills / chips on white cards | `#F2E3D8` |
+| Unselected controls (switch off, radio ring) | `#7A6E66` (3:1+) |
 | Text (espresso) | `#0A0805` |
 | Muted text | `#3D3530` |
 | Placeholder | `#6E6560` |

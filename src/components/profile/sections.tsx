@@ -68,7 +68,7 @@ export function HeroPhotoCard({ profile, onLike }: { profile: Profile; onLike: (
             icon={p.icon}
             iconColor={p.warm ? 'secondary' : (p.iconColor ?? 'primary')}
             color={p.warm ? 'onSecondaryFixed' : 'onSurface'}
-            bg={p.warm ? alpha(colors.secondaryFixed, 0.5) : 'surfaceContainerLow'}
+            bg={p.warm ? alpha(colors.secondaryFixed, 0.7) : 'surfaceContainerHigh'}
           />
         ))}
       </View>
@@ -114,7 +114,7 @@ export function VoicePromptCard({ profile, voice, onLike }: { profile: Profile; 
         </Text>
       </View>
       <Text variant="headlineLg">{voice.promptText}</Text>
-      <View style={{ padding: spacing.md, borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: colors.surfaceContainerLow, gap: 12 }}>
+      <View style={{ padding: spacing.md, borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: colors.surfaceContainerHigh, gap: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
           {/* TODO: wire to expo-audio once profiles carry real recordings. */}
           <IconButton icon="play_arrow" label={`Play ${profile.firstName}'s voice note`} filled size={48} iconSize={26} bg="secondary" color="onSecondary" shadow={shadows.md} />
@@ -221,7 +221,7 @@ export function ValuesCard({ profile }: { profile: Profile }) {
               padding: 12,
               borderRadius: radius.lg,
               borderCurve: 'continuous',
-              backgroundColor: colors.surfaceContainerLow,
+              backgroundColor: colors.surfaceContainerHigh,
             }}
           >
             <IconBadge icon={c.icon} size={32} iconSize={18} bg={c.bg} color={c.color} />

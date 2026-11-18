@@ -61,7 +61,7 @@ export function Button({
           gap: spacing.sm,
           borderRadius: radius.full,
           // Disabled: solid muted fill with readable text, not a faded colour.
-          backgroundColor: disabled ? colors.surfaceContainer : colors[v.bg],
+          backgroundColor: disabled ? colors.surfaceContainerHighest : colors[v.bg],
           boxShadow: disabled ? undefined : v.shadow,
           opacity: pressed ? 0.9 : 1,
           transform: [{ scale: pressed ? 0.98 : 1 }],
@@ -75,11 +75,11 @@ export function Button({
         <ActivityIndicator color={colors[v.fg]} />
       ) : (
         <>
-          {iconLeft ? <Icon name={iconLeft} size={22} color={disabled ? 'tertiaryContainer' : v.fg} filled={iconFilled} /> : null}
-          <Text variant="labelLg" color={disabled ? 'tertiaryContainer' : v.fg} style={{ fontFamily: fonts.sansBold }}>
+          {iconLeft ? <Icon name={iconLeft} size={22} color={disabled ? 'tertiary' : v.fg} filled={iconFilled} /> : null}
+          <Text variant="labelLg" color={disabled ? 'tertiary' : v.fg} style={{ fontFamily: fonts.sansBold }}>
             {title}
           </Text>
-          {icon ? <Icon name={icon} size={18} color={disabled ? 'tertiaryContainer' : v.fg} filled={iconFilled} /> : null}
+          {icon ? <Icon name={icon} size={18} color={disabled ? 'tertiary' : v.fg} filled={iconFilled} /> : null}
         </>
       )}
     </Pressable>

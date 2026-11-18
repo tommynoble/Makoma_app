@@ -5,16 +5,21 @@
  * hex value outside this file.
  */
 export const colors = {
-  background: '#fff8f5',
-  surface: '#fff8f5',
-  surfaceBright: '#fff8f5',
-  surfaceDim: '#e6d7ce',
+  /** Warm sand canvas: deep enough that white cards stand out (1.20:1, was 1.05:1). */
+  background: '#f3e9e1',
+  surface: '#f3e9e1',
+  surfaceBright: '#f3e9e1',
+  surfaceDim: '#e3cfc1',
+  /** Cards. */
   surfaceContainerLowest: '#ffffff',
-  surfaceContainerLow: '#fff1e8',
-  surfaceContainer: '#fbebe1',
-  surfaceContainerHigh: '#f5e5dc',
-  surfaceContainerHighest: '#efe0d6',
-  surfaceVariant: '#efe0d6',
+  /** Tinted panel ON THE CANVAS (lighter than the canvas). */
+  surfaceContainerLow: '#fff7f2',
+  surfaceContainer: '#f8ede5',
+  /** Pills, chips and panels ON WHITE CARDS (darker than white, 1.25:1). */
+  surfaceContainerHigh: '#f2e3d8',
+  /** Tracks, disabled fills. */
+  surfaceContainerHighest: '#e3cfc1',
+  surfaceVariant: '#e3cfc1',
   onSurface: '#0a0805',
   onSurfaceVariant: '#3d3530',
   inverseSurface: '#1f1a16',
@@ -60,7 +65,9 @@ export const colors = {
   errorContainer: '#ffdad6',
 
   /** Hairline border on cards and inputs. */
-  hairline: 'rgba(10, 8, 5, 0.06)',
+  hairline: 'rgba(10, 8, 5, 0.10)',
+  /** Unselected controls (switch off, radio ring): 3:1+ on canvas and cards (WCAG 1.4.11). */
+  control: '#7a6e66',
   /** Scrim behind sheets. */
   scrim: 'rgba(10, 8, 5, 0.45)',
   transparent: 'transparent',

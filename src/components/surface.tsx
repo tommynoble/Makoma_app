@@ -28,6 +28,8 @@ export function Card({
 }) {
   const base: ViewStyle = {
     backgroundColor: colors[bg],
+    // A fine edge so cards read clearly against the sand canvas.
+    ...(bg === 'surfaceContainerLowest' || bg === 'surfaceContainerLow' ? { borderWidth: 1, borderColor: colors.hairline } : null),
     borderRadius: radius[rounded],
     borderCurve: 'continuous',
     padding: padding === 'none' ? 0 : spacing[padding],

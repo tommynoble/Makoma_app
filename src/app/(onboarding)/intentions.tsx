@@ -83,7 +83,7 @@ export default function Intentions() {
                       paddingHorizontal: spacing.md,
                       minHeight: 48,
                       borderRadius: radius.xs,
-                      backgroundColor: active ? colors.surfaceContainerLow : colors.transparent,
+                      backgroundColor: active ? colors.surfaceContainerHigh : colors.transparent,
                     }}
                   >
                     <Text variant="labelLg" style={{ fontFamily: active ? fonts.sansBold : fonts.sansMedium }}>

@@ -112,7 +112,7 @@ export default function EditPrompts() {
                     <Field serif multiline accessibilityLabel="Your answer" placeholder="Type your answer…" value={value?.answer ?? ''} onChangeText={(answer) => setSlot(slot.id, { answer })} maxLength={250} />
                   </>
                 ) : (
-                  <View style={{ backgroundColor: colors.surfaceContainerLow, borderRadius: radius.card, padding: spacing.md }}>
+                  <View style={{ backgroundColor: colors.surfaceContainerHigh, borderRadius: radius.card, padding: spacing.md }}>
                     <Text italic style={{ fontSize: 17, lineHeight: 26 }}>
                       “{value?.answer.trim()}”
                     </Text>
