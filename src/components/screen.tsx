@@ -7,7 +7,7 @@ import { IconButton } from './button';
 import { ProgressSegments } from './surface';
 import { Text } from './text';
 
-export const ONBOARDING_STEPS = 6;
+export const ONBOARDING_STEPS = 5;
 
 /** "Makoma" wordmark in the editorial serif, as in the Discover header. */
 export function Wordmark({ size = 'lg' }: { size?: 'lg' | 'md' }) {
@@ -48,31 +48,41 @@ export function Screen({
 }) {
   const insets = useSafeAreaInsets();
   const body = (
-    <View style={{ width: '100%', maxWidth: maxContentWidth, alignSelf: 'center', paddingHorizontal: spacing.margin, gap: spacing.section }}>
+    <View style={{ width: '100%', maxWidth: maxContentWidth, alignSelf: 'center', paddingHorizontal: step ? spacing.lg : spacing.margin, gap: spacing.section }}>
       {children}
     </View>
   );
   return (
     <KeyboardAvoidingView behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: colors.surface }}>
-      <View style={{ paddingTop: insets.top, backgroundColor: colors.surface, boxShadow: shadows.header, zIndex: 1 }}>
-        <View style={{ paddingHorizontal: spacing.margin, paddingBottom: spacing.sm, gap: spacing.sm, maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
-          <View style={{ height: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
-              {back && router.canGoBack() ? (
-                <IconButton icon="arrow_back" label="Go back" onPress={() => router.back()} style={{ marginLeft: -spacing.sm }} />
-              ) : null}
-              <Wordmark />
+      {step ? (
+        <View style={{ paddingTop: insets.top + spacing.sm, backgroundColor: colors.surface, zIndex: 1 }}>
+          <View style={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.sm, maxWidth: maxContentWidth, width: '100%', alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+            {back && router.canGoBack() ? (
+              <IconButton icon="arrow_back" label="Go back" onPress={() => router.back()} style={{ marginLeft: -spacing.md }} />
+            ) : null}
+            <View style={{ flex: 1 }}>
+              <ProgressSegments total={ONBOARDING_STEPS} current={step} />
             </View>
-            {headerRight ??
-              (step ? (
-                <Text variant="labelSm" color="tertiary">
-                  Step {step} of {ONBOARDING_STEPS}
-                </Text>
-              ) : null)}
+            <Text variant="labelSm" color="tertiary" accessibilityLabel={`Step ${step} of ${ONBOARDING_STEPS}`}>
+              {step}/{ONBOARDING_STEPS}
+            </Text>
           </View>
-          {step ? <ProgressSegments total={ONBOARDING_STEPS} current={step} /> : null}
         </View>
-      </View>
+      ) : (
+        <View style={{ paddingTop: insets.top, backgroundColor: colors.surface, boxShadow: shadows.header, zIndex: 1 }}>
+          <View style={{ paddingHorizontal: spacing.margin, paddingBottom: spacing.sm, maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
+            <View style={{ height: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
+                {back && router.canGoBack() ? (
+                  <IconButton icon="arrow_back" label="Go back" onPress={() => router.back()} style={{ marginLeft: -spacing.sm }} />
+                ) : null}
+                <Wordmark />
+              </View>
+              {headerRight}
+            </View>
+          </View>
+        </View>
+      )}
       {scroll ? (
         <ScrollView
           keyboardShouldPersistTaps="handled"
@@ -86,7 +96,7 @@ export function Screen({
       {footer ? (
         <View
           style={{
-            paddingHorizontal: spacing.margin,
+            paddingHorizontal: step ? spacing.lg : spacing.margin,
             paddingTop: spacing.md,
             paddingBottom: Math.max(insets.bottom, spacing.md),
             gap: spacing.sm,

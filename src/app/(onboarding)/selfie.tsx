@@ -1,24 +1,24 @@
 import { useRef, useState } from 'react';
 import { View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { router } from 'expo-router';
-import Svg, { Circle, Path } from 'react-native-svg';
-import { Button, Card, Heading, Icon, IconBadge, Pill, Screen, Text } from '@/components';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Button, Card, Heading, Icon, Screen, Text } from '@/components';
 import { submitSelfieVerification } from '@/features/api';
 import { useOnboarding } from '@/features/onboarding/onboarding-context';
 import { isBackendConfigured } from '@/lib/supabase';
-import { alpha, colors, shadows, spacing } from '@/theme';
+import { colors, fonts, radius, spacing } from '@/theme';
 
 // A random pose makes it much harder to pass with a reused photo or video.
-const POSES = ['touch your nose with your right hand', 'give a thumbs up next to your face', 'hold up a peace sign next to your face'];
+const POSES = ['hold up a peace sign next to your face', 'touch your nose with your right hand', 'give a thumbs up next to your face'];
 
-const corner = (d: string) => (
-  <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
-    <Path d={d} stroke={colors.primary} strokeWidth={2.5} strokeLinecap="round" />
-  </Svg>
+const bracket = (pos: object) => (
+  <View style={[{ position: 'absolute', width: 32, height: 32, borderColor: colors.primary }, pos]} pointerEvents="none" />
 );
 
 export default function Selfie() {
+  const { from } = useLocalSearchParams<{ from?: string }>();
+  const fromProfile = from === 'profile';
+  const next = () => (fromProfile ? router.back() : router.push('/voice'));
   const { draft, update } = useOnboarding();
   const [permission, requestPermission] = useCameraPermissions();
   const [pose] = useState(() => POSES[Math.floor(Math.random() * POSES.length)]);
@@ -29,7 +29,7 @@ export default function Selfie() {
 
   const onPrimary = async () => {
     setError(null);
-    if (draft.selfieSubmitted) return router.push('/prompts');
+    if (draft.selfieSubmitted) return next();
     if (!permission?.granted) {
       const res = await requestPermission();
       if (!res.granted) setError('Camera access is needed to verify you. You can enable it in Settings.');
@@ -48,116 +48,59 @@ export default function Selfie() {
     }
   };
 
-  const status = draft.selfieSubmitted ? 'Submitted for review' : live ? 'Camera ready' : 'Camera off';
+  const status = draft.selfieSubmitted ? 'Sent for review' : live ? 'Camera ready' : 'Camera off';
 
   return (
     <Screen
-      step={4}
+      step={fromProfile ? undefined : 4}
       footer={
         <>
           <Button
-            title={draft.selfieSubmitted ? 'Continue' : live ? 'Take Live Selfie' : 'Turn on camera'}
-            variant="strong"
+            title={draft.selfieSubmitted ? (fromProfile ? 'Done' : 'Continue') : live ? 'Take Live Selfie' : 'Turn on camera'}
             iconLeft={draft.selfieSubmitted ? undefined : 'photo_camera'}
-            icon={draft.selfieSubmitted ? 'arrow_forward' : undefined}
-            iconFilled
             loading={busy}
             onPress={onPrimary}
           />
-          {!draft.selfieSubmitted ? <Button title="Skip for now" variant="tonal" size="md" onPress={() => router.push('/prompts')} /> : null}
+          {!draft.selfieSubmitted ? <Button title="Skip for now" variant="tonal" size="md" onPress={next} /> : null}
         </>
       }
     >
-      <View style={{ alignItems: 'center', gap: spacing.md }}>
-        <Heading
-          center
-          eyebrow={<Pill label="Trust & Safety" icon="security" iconFilled iconColor="primary" uppercase style={{ alignSelf: 'center' }} />}
-          title="Quick safety check."
-          subtitle="We match a live selfie to your profile photos to unlock your Verified Shield. It is never shown on your profile."
-        />
-        <Pill label="Verified profiles are shown first" icon="verified_user" iconFilled color="primary" bg={alpha(colors.primary, 0.1)} size="md" style={{ alignSelf: 'center' }} />
-      </View>
+      <Heading title="Quick safety check." subtitle="Verification builds trust in the Makoma community. Your selfie is never shown on your profile." />
 
-      <View style={{ alignItems: 'center', marginVertical: spacing.sm }}>
-        <View
-          style={{
-            width: 256,
-            height: 256,
-            borderRadius: 128,
-            backgroundColor: colors.surfaceContainerLow,
-            boxShadow: shadows.halo,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Svg width={256} height={256} viewBox="0 0 256 256" style={{ position: 'absolute' }}>
-            <Circle cx={128} cy={128} r={118} fill="none" stroke={alpha(colors.outlineVariant, 0.6)} strokeWidth={1.5} strokeDasharray="6 8" />
-          </Svg>
-          <View style={{ position: 'absolute', inset: 16, justifyContent: 'space-between' }} pointerEvents="none">
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              {corner('M1 9V5C1 2.79086 2.79086 1 5 1H9')}
-              {corner('M21 9V5C21 2.79086 19.2091 1 17 1H13')}
-            </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              {corner('M1 13V17C1 19.2091 2.79086 21 5 21H9')}
-              {corner('M21 13V17C21 19.2091 19.2091 21 17 21H13')}
-            </View>
-          </View>
-          <View style={{ width: 208, height: 208, borderRadius: 104, overflow: 'hidden', backgroundColor: colors.surfaceContainer, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ alignItems: 'center', paddingVertical: spacing.sm }}>
+        <View style={{ width: 256, height: 256, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ position: 'absolute', inset: 0, borderRadius: 128, borderWidth: 2, borderColor: colors.hairline }} />
+          <View style={{ width: 236, height: 236, borderRadius: 118, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceContainerLow }}>
             {live ? (
-              <CameraView ref={camera} facing="front" style={{ width: 208, height: 208 }} />
+              <CameraView ref={camera} facing="front" style={{ width: 236, height: 236 }} />
             ) : draft.selfieSubmitted ? (
-              <View style={{ flex: 1, alignSelf: 'stretch', backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', gap: spacing.sm }}>
-                <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: colors.onPrimary, alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon name="check" size={36} color="primary" />
-                </View>
-                <Text variant="labelMd" color="onPrimary" uppercase>
-                  Selfie sent
-                </Text>
+              <View style={{ flex: 1, alignSelf: 'stretch', backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name="check_circle" size={72} color="primaryFixed" />
               </View>
             ) : (
-              <Svg width={112} height={144} viewBox="0 0 120 160" fill="none">
-                <Path
-                  d="M60 16C37.9 16 20 35.7 20 60C20 83.2 34.7 103.7 55.5 107.5C57 107.8 58.5 109.1 58.5 110.7V118C58.5 119.7 59.8 121 61.5 121C63.2 121 64.5 119.7 64.5 118V110.7C64.5 109.1 66 107.8 67.5 107.5C85.3 103.7 100 83.2 100 60C100 35.7 82.1 16 60 16Z"
-                  stroke={alpha(colors.primary, 0.45)}
-                  strokeWidth={2}
-                  strokeDasharray="4 4"
-                  strokeLinecap="round"
-                />
-                <Path d="M42 58H48M72 58H78" stroke={alpha(colors.primary, 0.45)} strokeWidth={2.5} strokeLinecap="round" />
-                <Path d="M54 84C57.5 86 62.5 86 66 84" stroke={alpha(colors.primary, 0.45)} strokeWidth={2} strokeLinecap="round" />
-                <Path d="M12 152C16 138 34 130 60 130C86 130 104 138 108 152" stroke={alpha(colors.primary, 0.45)} strokeWidth={1.8} strokeDasharray="3 3" strokeLinecap="round" />
-              </Svg>
+              <Icon name="face" size={110} color="outlineVariant" filled={false} />
             )}
           </View>
-          <View
-            style={{
-              position: 'absolute',
-              bottom: -10,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-              paddingHorizontal: 12,
-              paddingVertical: 4,
-              borderRadius: 999,
-              backgroundColor: colors.surface,
-              boxShadow: shadows.md,
-            }}
-          >
-            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: live || draft.selfieSubmitted ? colors.primary : colors.outlineVariant }} />
-            <Text variant="labelSm">{status}</Text>
+          {bracket({ top: 0, left: 0, borderTopWidth: 2, borderLeftWidth: 2 })}
+          {bracket({ top: 0, right: 0, borderTopWidth: 2, borderRightWidth: 2 })}
+          {bracket({ bottom: 0, left: 0, borderBottomWidth: 2, borderLeftWidth: 2 })}
+          {bracket({ bottom: 0, right: 0, borderBottomWidth: 2, borderRightWidth: 2 })}
+          <View style={{ position: 'absolute', bottom: -12, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.full, backgroundColor: colors.primaryFixed }}>
+            <Text variant="labelSm" color="primary" uppercase>
+              {status}
+            </Text>
           </View>
         </View>
       </View>
 
-      <Card bg="surfaceContainerLow" style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' }}>
-        <IconBadge icon="face_retouching_natural" size={40} iconSize={22} bg="surfaceContainerHighest" color="secondary" />
-        <View style={{ flex: 1, gap: spacing.xs }}>
-          <Text variant="labelLg">Framing tips</Text>
-          <Text color="onSurfaceVariant">
-            Position your face in the circle and {pose}. Keep clear, natural lighting.
+      <Card rounded="card" padding="margin" shadow="none" bg="surfaceContainerLow" style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start', marginTop: spacing.sm }}>
+        <Icon name="lightbulb" size={22} color="secondary" filled={false} style={{ marginTop: 1 }} />
+        <Text variant="labelMd" color="secondary" style={{ flex: 1, fontFamily: fonts.sansMedium, fontSize: 14, lineHeight: 21 }}>
+          <Text variant="labelMd" color="secondary" style={{ fontFamily: fonts.sansBold, fontSize: 14 }}>
+            FRAMING TIP:{' '}
           </Text>
-        </View>
+          Please {pose} to show you’re taking this live.
+        </Text>
       </Card>
 
       {error ? (
@@ -165,22 +108,6 @@ export default function Selfie() {
           {error}
         </Text>
       ) : null}
-
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.lg }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Icon name="lock" size={16} color="tertiary" />
-          <Text variant="labelSm" color="tertiary">
-            Stored privately
-          </Text>
-        </View>
-        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.outlineVariant }} />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Icon name="visibility_off" size={16} color="tertiary" />
-          <Text variant="labelSm" color="tertiary">
-            Never on your profile
-          </Text>
-        </View>
-      </View>
     </Screen>
   );
 }

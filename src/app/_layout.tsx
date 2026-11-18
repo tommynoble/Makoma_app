@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
 import { MaterialSymbolsRounded_400Regular } from '@expo-google-fonts/material-symbols-rounded/400Regular';
 import { MaterialSymbolsRounded_400Regular_Filled } from '@expo-google-fonts/material-symbols-rounded/400Regular_Filled';
-import { Newsreader_400Regular } from '@expo-google-fonts/newsreader/400Regular';
-import { Newsreader_400Regular_Italic } from '@expo-google-fonts/newsreader/400Regular_Italic';
-import { Newsreader_500Medium } from '@expo-google-fonts/newsreader/500Medium';
-import { Newsreader_500Medium_Italic } from '@expo-google-fonts/newsreader/500Medium_Italic';
-import { Newsreader_600SemiBold } from '@expo-google-fonts/newsreader/600SemiBold';
+import { Fraunces_400Regular } from '@expo-google-fonts/fraunces/400Regular';
+import { Fraunces_400Regular_Italic } from '@expo-google-fonts/fraunces/400Regular_Italic';
+import { Fraunces_500Medium } from '@expo-google-fonts/fraunces/500Medium';
+import { Fraunces_500Medium_Italic } from '@expo-google-fonts/fraunces/500Medium_Italic';
+import { Fraunces_600SemiBold } from '@expo-google-fonts/fraunces/600SemiBold';
+import { Fraunces_600SemiBold_Italic } from '@expo-google-fonts/fraunces/600SemiBold_Italic';
 import { PlusJakartaSans_500Medium } from '@expo-google-fonts/plus-jakarta-sans/500Medium';
 import { PlusJakartaSans_600SemiBold } from '@expo-google-fonts/plus-jakarta-sans/600SemiBold';
 import { PlusJakartaSans_700Bold } from '@expo-google-fonts/plus-jakarta-sans/700Bold';
@@ -23,11 +24,12 @@ export default function RootLayout() {
   // Runtime loading works in Expo Go and on web. For store builds, also embed
   // these with the expo-font config plugin so they are ready at launch.
   const [loaded, error] = useFonts({
-    Newsreader_400Regular,
-    Newsreader_400Regular_Italic,
-    Newsreader_500Medium,
-    Newsreader_500Medium_Italic,
-    Newsreader_600SemiBold,
+    Fraunces_400Regular,
+    Fraunces_400Regular_Italic,
+    Fraunces_500Medium,
+    Fraunces_500Medium_Italic,
+    Fraunces_600SemiBold,
+    Fraunces_600SemiBold_Italic,
     PlusJakartaSans_500Medium,
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
@@ -66,6 +68,7 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen name="chat/[matchId]" options={{ headerShown: true, title: '' }} />
+          <Stack.Screen name="edit-prompts" options={{ headerShown: true, title: 'Your prompts' }} />
           <Stack.Screen name="treats" options={{ headerShown: true, title: 'My treats' }} />
           <Stack.Screen name="settings/privacy" options={{ headerShown: true, title: 'Privacy' }} />
         </Stack>

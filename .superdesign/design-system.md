@@ -13,9 +13,10 @@ Jobs to be done:
 
 ## Key pages
 1. Phone sign-in (+233, SMS code)
-2. Onboarding (6 steps, segmented progress bar): Community Pledge, Intentions & Location, About You
-   (work, goals, schools), Selfie Verification (random pose), Cultural Prompts (3 slots: Food & Culture,
-   Values & Ambition, Playful Debate), Voice Intro (20s)
+2. Onboarding (5 short steps, progress bar + one big title per step): Community Pledge, Intentions & Location,
+   About You (work, goals, schools), Selfie Verification (skippable), Voice Intro (skippable). The 3 prompts
+   (Food & Culture, Values & Ambition, Playful Debate) are done later from the Profile, which shows a
+   completion percentage.
 3. Discover: ONE profile at a time, read top to bottom like an editorial page. NO swiping. Each photo
    and answer has its own heart that opens a reply sheet. Floating bar: Pass, Send Rose, Like.
 4. Reply sheet: like a specific item with a written note (250 chars), a 20s voice reply, or a rose
@@ -30,40 +31,32 @@ A high-production literary journal or personal archive: unbleached parchment, te
 calm coastal teal. Reassuring, culturally proud, intimate and secure. Spacious, patient pacing.
 Avoid: neon, gamification, purple/pink gradients, generic dating-app chrome, confetti, emoji used as icons.
 
-## Colour (light mode only)
+## Colour (light mode only, "Bold Editorial Intent" v4; all text pairs pass WCAG AA)
 | Role | Hex |
 |---|---|
-| Canvas / surface | `#FFF8F5` |
-| Card (lowest) | `#FFFFFF` |
-| Card tint (low) | `#FFF1E8` |
-| Container | `#FBEBE1` |
-| Container high (chips, selected cards) | `#F5E5DC` |
-| Container highest (inactive tracks) | `#EFE0D6` |
-| Text (espresso) | `#221A14` |
-| Text variant | `#3F4948` |
-| Muted text | `#635D56` |
-| Placeholder / quiet | `#A49C93` |
-| Outline variant | `#BFC8C7` |
-| Primary (deep teal: strong CTA, active icons, trust) | `#286865` |
-| Primary container (soft teal: default CTA fill) | `#6BA8A4` |
-| Primary fixed (mint highlight) | `#AFEEE9` |
-| Secondary (terracotta: warm actions, selection, voice) | `#8E4C40` |
-| Secondary container | `#FDA99A` |
-| Secondary fixed (terracotta tint) | `#FFDAD4` |
-| Error | `#BA1A1A` |
-| Sheet scrim | `rgba(44,36,30,0.58)` |
+| Canvas | `#FFF8F5` |
+| Card | `#FFFFFF` (1px hairline `rgba(10,8,5,.06)`) |
+| Cream card / selected bg | `#FFF1E8` |
+| Chip | `#F5E5DC` |
+| Text (espresso) | `#0A0805` |
+| Muted text | `#3D3530` |
+| Placeholder | `#6E6560` |
+| Deep teal (headings accents, icons, strong actions) | `#1A4A47` |
+| Button teal (default CTA, white text 5.8:1) | `#2D6F6C` |
+| Terracotta (selection, voice, warm actions, white text 6.3:1) | `#A83B2A` |
+| Terracotta tint | `#FFB3A0` |
+| Soft terracotta (decoration only, never text) | `#E8664F` |
+| Mint highlight | `#7FE9E0` |
+| Disabled button | `#FBEBE1` fill, `#6E6560` text |
 
 ## Typography
-- **Newsreader** (serif) for identity, headlines, prompts and people's answers. Italic for quoted answers.
-  - Headline XL 30/38 regular, -0.01em · Headline LG 24/32 medium · Headline MD 22/28 medium
-  - Body LG 20/30 · Body MD 16/24
-- **Plus Jakarta Sans** for all interface utility: buttons, labels, chips, metadata.
-  - Label LG 15/20 semibold · Label MD 13/18 semibold · Label SM 11/14 bold
-  - Eyebrows: Label SM, UPPERCASE, wide tracking (~0.1em), often with a small coloured dot.
+- **Fraunces** (serif) for titles, names, prompts and answers. Screen titles 32/38 semibold, tracking -0.02em.
+- **Plus Jakarta Sans** for interface: buttons bold, labels semibold, eyebrows 11px bold uppercase tracking 0.1em in muted.
 
 ## Spacing, shape, depth
 - Screen margin 20px; spacing scale 4 / 8 / 16 / 24 / 36. Generous vertical gaps between cards (24px).
-- Radius: 6 (tiny tags), 16 (inputs, small cards), 32 (cards), 48 (hero cards), pill for buttons and chips.
+- Radius: 12 (onboarding/v4 cards), 16 (inputs), 32 (editorial Discover cards), pill for buttons and chips.
+- Card shadow (v4): `0 8px 30px rgba(10,8,5,.12)`.
 - Shadows are soft and warm-tinted: `0 1px 2px rgba(44,36,30,.05)` for cards,
   `0 4px 6px -1px rgba(44,36,30,.08)` raised, `0 8px 20px -4px rgba(40,104,101,.35)` strong teal CTA.
 - Header: surface with a hairline shadow `0 1px 8px rgba(0,0,0,.04)`. Bottom tab bar: surface with `0 -4px 20px rgba(44,36,30,.05)`.

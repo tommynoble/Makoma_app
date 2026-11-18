@@ -1,5 +1,5 @@
 import { ActivityIndicator, Pressable, type StyleProp, type ViewStyle } from 'react-native';
-import { colors, radius, shadows, spacing, type ColorName } from '@/theme';
+import { colors, fonts, radius, shadows, spacing, type ColorName } from '@/theme';
 import { Icon, type IconName } from './icon';
 import { Text } from './text';
 
@@ -60,9 +60,10 @@ export function Button({
           justifyContent: 'center',
           gap: spacing.sm,
           borderRadius: radius.full,
-          backgroundColor: colors[v.bg],
+          // Disabled: solid muted fill with readable text, not a faded colour.
+          backgroundColor: disabled ? colors.surfaceContainer : colors[v.bg],
           boxShadow: disabled ? undefined : v.shadow,
-          opacity: disabled ? 0.5 : pressed ? 0.9 : 1,
+          opacity: pressed ? 0.9 : 1,
           transform: [{ scale: pressed ? 0.98 : 1 }],
           alignSelf: fullWidth ? 'stretch' : 'center',
           ...sizes[size],
@@ -74,11 +75,11 @@ export function Button({
         <ActivityIndicator color={colors[v.fg]} />
       ) : (
         <>
-          {iconLeft ? <Icon name={iconLeft} size={22} color={v.fg} filled={iconFilled} /> : null}
-          <Text variant="labelLg" color={v.fg}>
+          {iconLeft ? <Icon name={iconLeft} size={22} color={disabled ? 'tertiaryContainer' : v.fg} filled={iconFilled} /> : null}
+          <Text variant="labelLg" color={disabled ? 'tertiaryContainer' : v.fg} style={{ fontFamily: fonts.sansBold }}>
             {title}
           </Text>
-          {icon ? <Icon name={icon} size={18} color={v.fg} filled={iconFilled} /> : null}
+          {icon ? <Icon name={icon} size={18} color={disabled ? 'tertiaryContainer' : v.fg} filled={iconFilled} /> : null}
         </>
       )}
     </Pressable>

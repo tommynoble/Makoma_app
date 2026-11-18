@@ -85,8 +85,10 @@ export function Field({ serif, style, ...props }: TextInputProps & { serif?: boo
         serif ? type.bodyMd : { fontFamily: fonts.sansMedium, fontSize: 15, lineHeight: 24 },
         {
           color: colors.onSurface,
-          backgroundColor: colors.surfaceContainerLow,
-          borderRadius: props.multiline ? radius.md : radius.full,
+          backgroundColor: colors.surfaceContainerLowest,
+          borderWidth: 1,
+          borderColor: colors.hairline,
+          borderRadius: radius.md,
           borderCurve: 'continuous',
           paddingHorizontal: spacing.margin,
           paddingVertical: 14,

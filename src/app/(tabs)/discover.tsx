@@ -3,10 +3,12 @@ import { ScrollView, View } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Icon, IconButton, Pill, Text, Wordmark } from '@/components';
+import { Button, Card, Icon, IconButton, Pill, Text, Wordmark } from '@/components';
 import { HeroPhotoCard, PhotoCard, SharedGroundCard, TextPromptCard, ValuesCard, VoicePromptCard } from '@/components/profile/sections';
 import { fetchDiscover, likeProfile, passProfile } from '@/features/api';
 import { MOCK_ME } from '@/features/mock-data';
+import { profileCompletion } from '@/features/onboarding/completion';
+import { useOnboarding } from '@/features/onboarding/onboarding-context';
 import { alpha, colors, maxContentWidth, shadows, spacing } from '@/theme';
 import type { DiscoverCard, DiscoverFilters } from '@/types/domain';
 
@@ -24,6 +26,8 @@ export default function Discover() {
   const [cards, setCards] = useState<DiscoverCard[]>([]);
   const [status, setStatus] = useState<Load>('loading');
   const [toast, setToast] = useState<string | null>(null);
+  const { draft } = useOnboarding();
+  const completion = profileCompletion({ ...draft, firstName: draft.firstName || MOCK_ME.firstName, intent: draft.intent ?? MOCK_ME.intent }).percent;
 
   const load = () =>
     fetchDiscover(FILTERS)
@@ -108,6 +112,23 @@ export default function Discover() {
         <>
           <ScrollView ref={scroll} contentContainerStyle={{ paddingTop: spacing.md, paddingBottom: 112 }}>
             <View style={{ width: '100%', maxWidth: maxContentWidth, alignSelf: 'center', paddingHorizontal: spacing.margin, gap: spacing.lg }}>
+              {completion < 100 ? (
+                <Card
+                  rounded="card"
+                  padding="md"
+                  shadow="none"
+                  bg="surfaceContainerLow"
+                  onPress={() => router.push('/profile')}
+                  accessibilityLabel={`Your profile is ${completion} percent complete. Finish it.`}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}
+                >
+                  <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15, color: colors.primary }}>{completion}%</Text>
+                  <Text variant="labelMd" style={{ flex: 1, fontFamily: 'PlusJakartaSans_600SemiBold' }}>
+                    Your profile is {completion}% complete. Add prompts and a voice intro.
+                  </Text>
+                  <Icon name="chevron_right" size={20} color="tertiary" />
+                </Card>
+              ) : null}
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, flexShrink: 1 }}>
                   <Icon name="location_on" size={18} color="primary" />

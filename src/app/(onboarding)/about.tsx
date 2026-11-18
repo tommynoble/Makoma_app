@@ -1,66 +1,37 @@
 import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
-import { Button, Field, Heading, Icon, Pill, Screen, Text } from '@/components';
+import { Button, Eyebrow, Field, Heading, Screen, Text } from '@/components';
 import { INSTITUTIONS } from '@/constants/ghana';
 import { useOnboarding } from '@/features/onboarding/onboarding-context';
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, radius, spacing } from '@/theme';
 
-/**
- * Ambition and roots: what you do, where you are going, and the schools that
- * connect you to others. NOTE: no Stitch design exists for this step yet; it
- * is assembled from the same kit so it matches the rest of onboarding.
- */
+/** Work, direction and schools (shared roots). */
 export default function About() {
   const { draft, update } = useOnboarding();
   const toggle = (id: string) =>
-    update({
-      institutionIds: draft.institutionIds.includes(id) ? draft.institutionIds.filter((x) => x !== id) : [...draft.institutionIds, id],
-    });
+    update({ institutionIds: draft.institutionIds.includes(id) ? draft.institutionIds.filter((x) => x !== id) : [...draft.institutionIds, id] });
 
   return (
-    <Screen
-      step={3}
-      footer={<Button title="Continue" icon="arrow_forward" disabled={!draft.firstName?.trim() || !draft.occupation?.trim()} onPress={() => router.push('/selfie')} />}
-    >
-      <Heading
-        eyebrow={<Pill label="About You" dot="primaryContainer" color="tertiary" uppercase />}
-        title="Tell us who you are."
-        subtitle="Your work and direction matter here as much as your photos."
-      />
+    <Screen step={3} footer={<Button title="Continue" disabled={!draft.firstName?.trim() || !draft.occupation?.trim()} onPress={() => router.push('/selfie')} />}>
+      <Heading title="Share your story." />
 
       <View style={{ gap: spacing.lg }}>
         <View style={{ gap: spacing.sm }}>
-          <Text variant="labelMd">First name</Text>
-          <Field accessibilityLabel="First name" placeholder="e.g. Kwame" value={draft.firstName} onChangeText={(firstName) => update({ firstName })} autoCapitalize="words" />
+          <Eyebrow>First name</Eyebrow>
+          <Field accessibilityLabel="First name" placeholder="e.g. Akosua" value={draft.firstName} onChangeText={(firstName) => update({ firstName })} autoCapitalize="words" />
         </View>
         <View style={{ gap: spacing.sm }}>
-          <Text variant="labelMd">What do you do?</Text>
-          <Field accessibilityLabel="Occupation" placeholder="e.g. Pharmacist, Software engineer" value={draft.occupation} onChangeText={(occupation) => update({ occupation })} />
+          <Eyebrow>What do you do?</Eyebrow>
+          <Field accessibilityLabel="What do you do?" placeholder="e.g. Brand Strategist" value={draft.occupation} onChangeText={(occupation) => update({ occupation })} />
         </View>
         <View style={{ gap: spacing.sm }}>
-          <Text variant="labelMd">Where are you headed?</Text>
-          <Field
-            serif
-            multiline
-            accessibilityLabel="Your goals"
-            placeholder="A line or two about what you are building towards."
-            value={draft.lifeGoals}
-            onChangeText={(lifeGoals) => update({ lifeGoals })}
-            maxLength={300}
-          />
+          <Eyebrow>Where are you headed? (optional)</Eyebrow>
+          <Field multiline accessibilityLabel="Your goals" placeholder="My long-term goals are…" value={draft.lifeGoals} onChangeText={(lifeGoals) => update({ lifeGoals })} maxLength={300} />
         </View>
       </View>
 
       <View style={{ gap: spacing.md }}>
-        <View style={{ gap: spacing.sm }}>
-          <Text variant="labelSm" color="tertiary" uppercase>
-            Shared Roots
-          </Text>
-          <Text variant="headlineMd" accessibilityRole="header">
-            Schools you attended
-          </Text>
-          <Text color="tertiary">We show people what you have in common. Optional.</Text>
-        </View>
+        <Eyebrow>Shared roots (schools, optional)</Eyebrow>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
           {INSTITUTIONS.map((i) => {
             const on = draft.institutionIds.includes(i.id);
@@ -70,20 +41,9 @@ export default function About() {
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: on }}
                 onPress={() => toggle(i.id)}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 6,
-                  minHeight: 40,
-                  paddingHorizontal: 14,
-                  borderRadius: radius.full,
-                  backgroundColor: on ? colors.secondaryFixed : colors.surfaceContainerLowest,
-                  borderWidth: 1,
-                  borderColor: on ? colors.secondary : colors.surfaceContainerHighest,
-                }}
+                style={{ minHeight: 40, paddingHorizontal: spacing.md, justifyContent: 'center', borderRadius: radius.full, backgroundColor: on ? colors.secondary : colors.surfaceContainerHigh }}
               >
-                {on ? <Icon name="check" size={16} color="secondary" /> : null}
-                <Text variant="labelMd" color={on ? 'onSecondaryContainer' : 'onSurface'}>
+                <Text variant="labelMd" color={on ? 'onSecondary' : 'onSurface'} style={{ fontFamily: fonts.sansSemiBold }}>
                   {i.label}
                 </Text>
               </Pressable>

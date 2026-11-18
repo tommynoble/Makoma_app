@@ -1,22 +1,25 @@
 import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import { router } from 'expo-router';
-import { Button, Card, Heading, Icon, IconButton, Pill, Screen, Text, Waveform } from '@/components';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Button, Card, Heading, IconButton, Screen, Text, Waveform } from '@/components';
 import { useOnboarding } from '@/features/onboarding/onboarding-context';
 import { useVoiceRecorder, VOICE_INTRO_MAX_MS } from '@/features/voice/use-voice-recorder';
-import { colors, fonts, radius, spacing } from '@/theme';
+import { colors, fonts, shadows, spacing } from '@/theme';
 
 const SUGGESTIONS = [
-  'Greet your match like it’s Friday evening and share your favourite Accra or Kumasi hangout.',
-  'Describe your dream Sunday morning breakfast and who you’re sharing it with.',
+  'Greet your match like it’s Friday evening and share your favourite local hangout.',
+  'Describe your dream Sunday breakfast and who you’re sharing it with.',
   'Teach a two-word phrase in your language and what it means to you.',
 ];
 
 const clock = (ms: number) => `0:${String(Math.floor(ms / 1000)).padStart(2, '0')}`;
 
-/** A short voice intro lets people hear warmth, accent and humour before matching. */
+/** A short voice intro lets people hear warmth, accent and humour. Optional. */
 export default function Voice() {
+  const { from } = useLocalSearchParams<{ from?: string }>();
+  const fromProfile = from === 'profile';
+  const finish = () => (fromProfile ? router.back() : router.replace('/discover'));
   const { draft, update } = useOnboarding();
   const rec = useVoiceRecorder(VOICE_INTRO_MAX_MS);
   const [suggestion, setSuggestion] = useState(0);
@@ -34,6 +37,7 @@ export default function Voice() {
     const result = await rec.stop();
     if (result) update({ voiceIntro: result, voicePromptText: SUGGESTIONS[suggestion] });
   };
+
   // Count up while recording and stop automatically at the limit.
   useEffect(() => {
     if (!rec.isRecording) return;
@@ -55,101 +59,55 @@ export default function Voice() {
 
   const shownMs = rec.isRecording ? elapsed : clip ? (playback.playing ? playback.currentTime * 1000 : clip.durationMs) : 0;
   const progress = rec.isRecording ? elapsed / VOICE_INTRO_MAX_MS : clip && playback.duration ? playback.currentTime / playback.duration : clip ? 1 : 0;
-  const state = rec.isRecording ? 'recording' : clip ? 'ready' : 'idle';
+  const link = { fontFamily: fonts.sansBold, fontSize: 14, textDecorationLine: 'underline' } as const;
 
   return (
     <Screen
-      step={6}
+      step={fromProfile ? undefined : 5}
       footer={
         <>
-          <Button title="Finish & Enter Discover" icon="arrow_forward" onPress={() => router.replace('/discover')} />
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', gap: spacing.sm }}>
-            <Icon name="lock" size={16} color="tertiary" />
-            <Text variant="labelSm" color="tertiary" center style={{ flexShrink: 1 }}>
-              {clip ? 'You can re-record your voice intro anytime in your profile.' : 'Optional, but profiles with a voice feel far more human.'}
-            </Text>
-          </View>
+          <Button title={fromProfile ? 'Done' : 'Finish & Enter Discover'} onPress={finish} />
+          {!clip && !fromProfile ? <Button title="Skip for now" variant="tonal" size="md" onPress={finish} /> : null}
         </>
       }
     >
-      <Heading
-        eyebrow={<Pill label="Voice Intro" dot="primary" uppercase />}
-        title="Let them hear your warmth."
-        subtitle="Profiles with voice notes feel immediate and human. Record up to 20 seconds, in any language you like."
-      />
+      <Heading title={'Let them hear\nyour warmth.'} subtitle="Up to 20 seconds, in any language you like. You can do this later from your profile." />
 
-      <Card bg="surfaceContainerLow" padding="none" style={{ overflow: 'hidden', flexDirection: 'row' }}>
-        <View style={{ width: 6, backgroundColor: colors.secondaryContainer }} />
-        <View style={{ flex: 1, padding: spacing.lg, gap: spacing.sm }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Icon name="lightbulb" size={16} color="secondary" />
-              <Text variant="labelSm" color="secondary" uppercase>
-                Prompt Suggestion
-              </Text>
-            </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Show another suggestion"
-              hitSlop={12}
-              onPress={() => setSuggestion((s) => (s + 1) % SUGGESTIONS.length)}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}
-            >
-              <Icon name="shuffle" size={15} color="tertiary" />
-              <Text variant="labelSm" color="tertiary">
-                Swap
-              </Text>
-            </Pressable>
-          </View>
-          <Text variant="headlineMd" italic>
-            “{SUGGESTIONS[suggestion]}”
-          </Text>
-        </View>
+      <Card rounded="card" padding="lg" shadow="none" bg="surfaceContainerLow" style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md }}>
+        <Text variant="bodyLg" italic style={{ flex: 1, fontSize: 18, lineHeight: 28 }}>
+          “{SUGGESTIONS[suggestion]}”
+        </Text>
+        <IconButton icon="refresh" label="Show another suggestion" size={40} iconSize={20} bg="surfaceContainerLowest" shadow={shadows.sm} onPress={() => setSuggestion((s) => (s + 1) % SUGGESTIONS.length)} />
       </Card>
 
-      <Card rounded="xl" padding="lg" shadow="md" style={{ gap: spacing.lg }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Pill
-            size="md"
-            label={state === 'recording' ? 'Recording…' : state === 'ready' ? 'Ready to preview' : 'Tap the mic to start'}
-            icon={state === 'ready' ? 'check_circle' : state === 'recording' ? 'graphic_eq' : 'mic'}
-            iconColor="primary"
-            bg="primaryFixed"
-            color="onPrimaryFixed"
-          />
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.surfaceContainer, paddingHorizontal: 12, paddingVertical: 4, borderRadius: radius.full }}>
-            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: state === 'recording' ? colors.error : colors.secondary }} />
-            <Text variant="labelMd" style={{ fontFamily: fonts.sansSemiBold, fontVariant: ['tabular-nums'] }}>
-              {clock(shownMs)} / {clock(VOICE_INTRO_MAX_MS)}
-            </Text>
-          </View>
+      <Card rounded="card" padding="lg" shadow="warm" style={{ alignItems: 'center', gap: spacing.lg, paddingVertical: spacing.xl, borderWidth: 1, borderColor: colors.hairline }}>
+        <View style={{ height: 64, width: '80%', flexDirection: 'row', alignItems: 'center' }}>
+          <Waveform seed={clip?.uri ?? SUGGESTIONS[suggestion]} progress={progress} height={64} count={18} barWidth={5} playedColor="primary" restColor="outlineVariant" />
         </View>
-
-        <View style={{ height: 112, backgroundColor: colors.surfaceContainerLow, borderRadius: radius.lg, borderCurve: 'continuous', padding: spacing.md, flexDirection: 'row', alignItems: 'center' }}>
-          <Waveform seed={clip?.uri ?? SUGGESTIONS[suggestion]} progress={progress} height={80} />
-        </View>
-
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={{ fontFamily: fonts.sansBold, fontSize: 24, lineHeight: 30, color: colors.onSurface, fontVariant: ['tabular-nums'] }}>
+          {clock(shownMs)} / {clock(VOICE_INTRO_MAX_MS)}
+        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xl }}>
           {clip && !rec.isRecording ? (
-            <Pressable accessibilityRole="button" accessibilityLabel="Re-record audio" hitSlop={10} onPress={start} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 }}>
-              <Icon name="refresh" size={18} color="tertiary" />
-              <Text variant="labelMd" color="tertiary">
-                Re-record audio
+            <Pressable accessibilityRole="button" accessibilityLabel="Re-record" hitSlop={12} onPress={start}>
+              <Text color="secondary" style={link}>
+                Re-record
               </Text>
             </Pressable>
           ) : (
-            <Text variant="labelMd" color="tertiary" style={{ flex: 1 }}>
-              {rec.isRecording ? 'Tap stop when you are done.' : 'Speak naturally. One take is fine.'}
-            </Text>
+            <View style={{ width: 72 }} />
           )}
-          {state === 'ready' ? (
-            <IconButton icon={playback.playing ? 'pause' : 'play_arrow'} label={playback.playing ? 'Pause preview' : 'Play preview'} filled size={56} iconSize={32} bg="secondaryContainer" color="onSecondaryContainer" onPress={togglePlay} />
+          {clip && !rec.isRecording ? (
+            <IconButton icon={playback.playing ? 'pause' : 'play_arrow'} label={playback.playing ? 'Pause' : 'Play your recording'} size={64} iconSize={36} bg="primary" color="onPrimary" shadow={shadows.lg} onPress={togglePlay} />
           ) : (
-            <IconButton icon={rec.isRecording ? 'stop' : 'mic'} label={rec.isRecording ? 'Stop recording' : 'Start recording'} filled size={56} iconSize={30} bg={rec.isRecording ? 'error' : 'secondary'} color="onSecondary" onPress={rec.isRecording ? stop : start} />
+            <IconButton icon={rec.isRecording ? 'stop' : 'mic'} label={rec.isRecording ? 'Stop recording' : 'Start recording'} size={64} iconSize={32} bg={rec.isRecording ? 'secondary' : 'primary'} color="onPrimary" shadow={shadows.lg} onPress={rec.isRecording ? stop : start} />
           )}
+          <Text color="tertiary" style={{ width: 72, fontFamily: fonts.sansSemiBold, fontSize: 13 }}>
+            {rec.isRecording ? 'Recording…' : clip ? 'Saved' : 'Tap to start'}
+          </Text>
         </View>
         {rec.error ? (
-          <Text variant="labelMd" color="error" selectable>
+          <Text variant="labelMd" color="error" center selectable>
             {rec.error}
           </Text>
         ) : null}

@@ -26,3 +26,12 @@ export function Text({ variant = 'bodyMd', color = 'onSurface', italic, uppercas
     />
   );
 }
+
+/** Small uppercase label above a field or section (v4 "eyebrow"). */
+export function Eyebrow({ children, color = 'tertiary' }: { children: string; color?: ColorName }) {
+  return (
+    <Text variant="labelSm" color={color} uppercase>
+      {children}
+    </Text>
+  );
+}

@@ -11,9 +11,10 @@ export const spacing = {
   gutter: 16,
 } as const;
 
-/** Stitch corner scale: rounded-md 6, rounded/2xl 16, lg 32, xl 48, full. */
+/** Corners: card 12 (onboarding / v4), md 16 (inputs), lg 32 and xl 48 (editorial Discover cards). */
 export const radius = {
   xs: 6,
+  card: 12,
   md: 16,
   lg: 32,
   xl: 48,
@@ -22,11 +23,13 @@ export const radius = {
 
 /** Soft, warm elevation levels used across the designs. */
 export const shadows = {
-  sm: '0 1px 2px rgba(44, 36, 30, 0.05)',
+  sm: '0 1px 2px rgba(10, 8, 5, 0.06)',
+  /** v4 card shadow. */
+  warm: '0 8px 30px rgba(10, 8, 5, 0.12)',
   md: '0 4px 6px -1px rgba(44, 36, 30, 0.08), 0 2px 4px -2px rgba(44, 36, 30, 0.06)',
   lg: '0 10px 15px -3px rgba(44, 36, 30, 0.10), 0 4px 6px -4px rgba(44, 36, 30, 0.08)',
   xl: '0 20px 25px -5px rgba(44, 36, 30, 0.12), 0 8px 10px -6px rgba(44, 36, 30, 0.08)',
-  primaryGlow: '0 8px 20px -4px rgba(40, 104, 101, 0.35)',
+  primaryGlow: '0 8px 20px -4px rgba(26, 74, 71, 0.35)',
   halo: '0 20px 48px -12px rgba(40, 104, 101, 0.18)',
   header: '0 1px 8px rgba(0, 0, 0, 0.04)',
   tabBar: '0 -4px 20px rgba(44, 36, 30, 0.05)',

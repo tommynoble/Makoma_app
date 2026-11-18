@@ -5,19 +5,21 @@ import type { TextStyle } from 'react-native';
  * file, so styles pick a family and never set `fontWeight`.
  */
 export const fonts = {
-  serif: 'Newsreader_400Regular',
-  serifItalic: 'Newsreader_400Regular_Italic',
-  serifMedium: 'Newsreader_500Medium',
-  serifMediumItalic: 'Newsreader_500Medium_Italic',
-  serifSemiBold: 'Newsreader_600SemiBold',
+  serif: 'Fraunces_400Regular',
+  serifItalic: 'Fraunces_400Regular_Italic',
+  serifMedium: 'Fraunces_500Medium',
+  serifMediumItalic: 'Fraunces_500Medium_Italic',
+  serifSemiBold: 'Fraunces_600SemiBold',
+  serifSemiBoldItalic: 'Fraunces_600SemiBold_Italic',
   sansMedium: 'PlusJakartaSans_500Medium',
   sansSemiBold: 'PlusJakartaSans_600SemiBold',
   sansBold: 'PlusJakartaSans_700Bold',
 } as const;
 
-/** Stitch type ramp (mobile sizes). Newsreader for reading, Plus Jakarta Sans for controls. */
+/** Type ramp (mobile). Fraunces for reading and headlines, Plus Jakarta Sans for controls. */
 export const type = {
-  headlineXl: { fontFamily: fonts.serif, fontSize: 30, lineHeight: 38, letterSpacing: -0.3 },
+  /** v4 screen titles: Fraunces semibold 32. */
+  headlineXl: { fontFamily: fonts.serifSemiBold, fontSize: 32, lineHeight: 38, letterSpacing: -0.6 },
   headlineLg: { fontFamily: fonts.serifMedium, fontSize: 24, lineHeight: 32, letterSpacing: -0.24 },
   headlineMd: { fontFamily: fonts.serifMedium, fontSize: 22, lineHeight: 28 },
   bodyLg: { fontFamily: fonts.serif, fontSize: 20, lineHeight: 30 },
@@ -33,4 +35,5 @@ export type TypeVariant = keyof typeof type;
 export const italicOf: Partial<Record<string, string>> = {
   [fonts.serif]: fonts.serifItalic,
   [fonts.serifMedium]: fonts.serifMediumItalic,
+  [fonts.serifSemiBold]: fonts.serifSemiBoldItalic,
 };
