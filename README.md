@@ -50,6 +50,12 @@ src/
     person/[id]        full profile of someone who liked you / a match
     edit-profile       photos (image picker, up to 6) and every profile field
     photos             full-screen photo viewer
+    report             report / block sheet
+    match-actions      chat "more" sheet: profile, date plan, unmatch, report
+    date-plan          share a date plan with a trusted contact
+    safety             safety centre (emergency numbers, scams, date tips)
+    settings/          settings, blocked people, delete account
+    legal/[doc]        pledge, terms, privacy, help
   components/          design-system kit (Text, Button, Card, Pill, Icon, Screen…) + profile sections
   constants/           intents, culturally rooted prompts, Ghana data (schools, languages, sachet pricing)
   features/            data access (api.ts), voice recorder, shared-ground ranking, onboarding state

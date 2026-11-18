@@ -42,7 +42,12 @@ export default function Person() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      <Stack.Screen options={{ title: p.firstName }} />
+      <Stack.Screen
+        options={{
+          title: p.firstName,
+          headerRight: () => <IconButton icon="flag" label={`Report or block ${p.firstName}`} onPress={() => router.push({ pathname: '/report', params: { profileId: p.id } })} />,
+        }}
+      />
       <ScrollView contentContainerStyle={{ paddingTop: spacing.md, paddingBottom: 120 }}>
         <View style={{ width: '100%', maxWidth: maxContentWidth, alignSelf: 'center', paddingHorizontal: spacing.margin, gap: spacing.lg }}>
           {p.likesYou && !match ? (

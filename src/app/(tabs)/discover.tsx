@@ -10,7 +10,10 @@ import { useMyProfile } from '@/features/me';
 import { toCard } from '@/features/mock-data';
 import { profileCompletion } from '@/features/onboarding/completion';
 import { useOnboarding } from '@/features/onboarding/onboarding-context';
+import { INSTITUTIONS, LANGUAGES } from '@/constants/ghana';
+import { computeSharedGround, sharedGroundScore } from '@/features/discover/shared-ground';
 import { DEFAULT_FILTERS, useSocial } from '@/features/social/social-store';
+import type { SharedGround } from '@/types/domain';
 import { haptic, TOAST_IN, TOAST_OUT } from '@/lib/motion';
 import { alpha, colors, maxContentWidth, shadows, spacing } from '@/theme';
 
@@ -18,6 +21,19 @@ import { alpha, colors, maxContentWidth, shadows, spacing } from '@/theme';
  * One profile at a time, read top to bottom like an editorial page. No
  * swiping: like a specific photo or answer, pass, or send a rose.
  */
+function sharedReason(s: SharedGround) {
+  const bits: string[] = [];
+  const school = s.institutions[0] ? INSTITUTIONS.find((i) => i.id === s.institutions[0])?.label : undefined;
+  if (school) bits.push(`you both went to ${school}`);
+  const lang = s.languages[0] ? LANGUAGES.find((l) => l.id === s.languages[0])?.label : undefined;
+  if (lang) bits.push(`you both speak ${lang}`);
+  if (s.sameChurch) bits.push('you share a church');
+  if (s.sameNeighborhood) bits.push('you live in the same area');
+  if (!bits.length && s.sameIntent) bits.push('you want the same thing');
+  const text = bits.slice(0, 2).join(' and ');
+  return text.charAt(0).toUpperCase() + text.slice(1) + '.';
+}
+
 export default function Discover() {
   const insets = useSafeAreaInsets();
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
@@ -38,8 +54,11 @@ export default function Discover() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  const deck = social.deck;
+  // Server ranks the live deck; the demo deck is ranked here by shared ground.
+  const deck = social.live ? social.deck : [...social.deck].sort((a, b) => sharedGroundScore(computeSharedGround(me, b)) - sharedGroundScore(computeSharedGround(me, a)));
   const current = deck[0] ? toCard(deck[0], me) : undefined;
+  // Strong shared ground (beyond just the same intent) earns a "Today's pick" note.
+  const topPick = current && sharedGroundScore(current.shared) >= 6 ? sharedReason(current.shared) : null;
   const completion = profileCompletion({ ...draft, firstName: me.firstName, intent: me.intent }).percent;
   const filtersOn = JSON.stringify(social.state.filters) !== JSON.stringify(DEFAULT_FILTERS);
 
@@ -132,6 +151,30 @@ export default function Discover() {
                   </Text>
                   <Icon name="chevron_right" size={20} color="tertiary" />
                 </Card>
+              ) : null}
+              {social.state.paused ? (
+                <Card rounded="card" padding="md" shadow="none" bg="secondaryFixed" style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+                  <Icon name="pause_circle" size={22} color="secondary" />
+                  <Text variant="labelMd" color="onSecondaryFixed" style={{ flex: 1, fontFamily: 'PlusJakartaSans_600SemiBold' }}>
+                    Your profile is paused. You can browse, but no one new can see you.
+                  </Text>
+                  <Button title="Unpause" size="md" variant="tonal" fullWidth={false} onPress={() => social.setPaused(false).catch(() => {})} />
+                </Card>
+              ) : null}
+              {topPick ? (
+                <Enter key={`pick-${current.profile.id}`} variant="fade">
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md, borderRadius: 16, backgroundColor: colors.primary }}>
+                    <Icon name="auto_awesome" size={20} color="primaryFixed" />
+                    <View style={{ flex: 1 }}>
+                      <Text variant="labelSm" color="primaryFixed" uppercase>
+                        Today’s pick for you
+                      </Text>
+                      <Text variant="labelMd" color="onPrimary" style={{ fontFamily: 'PlusJakartaSans_600SemiBold' }}>
+                        {topPick}
+                      </Text>
+                    </View>
+                  </View>
+                </Enter>
               ) : null}
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, flexShrink: 1 }}>

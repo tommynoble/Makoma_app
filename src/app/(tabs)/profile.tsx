@@ -8,16 +8,17 @@ import { LANGUAGES } from '@/constants/ghana';
 import { intentLabel } from '@/constants/intents';
 import { useMyProfile } from '@/features/me';
 import { profileCompletion } from '@/features/onboarding/completion';
-import { ME_KEY, useOnboarding } from '@/features/onboarding/onboarding-context';
-import { SOCIAL_KEY, useSocial } from '@/features/social/social-store';
-import { CSS_EASE_OUT, haptic } from '@/lib/motion';
-import { clearPersisted } from '@/lib/persist';
-import { isBackendConfigured, supabase } from '@/lib/supabase';
+import { useOnboarding } from '@/features/onboarding/onboarding-context';
+import { useSocial } from '@/features/social/social-store';
+import { CSS_EASE_OUT } from '@/lib/motion';
+import { isBackendConfigured } from '@/lib/supabase';
 import { colors, fonts, radius, spacing } from '@/theme';
 
-const LINKS: { icon: IconName; title: string; body: string; href: '/treats' | '/settings/privacy' }[] = [
+const LINKS: { icon: IconName; title: string; body: string; href: '/treats' | '/settings/privacy' | '/settings' | '/safety' }[] = [
   { icon: 'redeem', title: 'My treats', body: 'Vouchers you have received', href: '/treats' },
   { icon: 'visibility_off', title: 'Privacy & Incognito', body: 'Control who can see you', href: '/settings/privacy' },
+  { icon: 'shield_person', title: 'Safety centre', body: 'Date tips, scams to avoid, emergency numbers', href: '/safety' },
+  { icon: 'settings', title: 'Settings', body: 'Account, notifications, pause, delete', href: '/settings' },
 ];
 
 /** Profile, with a completion card for everything onboarding let people skip. */
@@ -26,7 +27,7 @@ const FILL = { from: { transform: [{ scaleX: 0 }] }, to: { transform: [{ scaleX:
 
 export default function MyProfile() {
   const reduced = useReducedMotion();
-  const { draft, reset } = useOnboarding();
+  const { draft } = useOnboarding();
   const social = useSocial();
   const me = useMyProfile();
   const name = me.firstName;
@@ -36,15 +37,6 @@ export default function MyProfile() {
   const incognito = social.state.incognitoUntil && new Date(social.state.incognitoUntil) > new Date();
   const matchCount = Object.keys(social.state.matches).length;
   const likedCount = Object.keys(social.state.liked).length;
-
-  const logOut = async () => {
-    haptic.medium();
-    if (isBackendConfigured) await supabase.auth.signOut().catch(() => {});
-    await clearPersisted([ME_KEY, SOCIAL_KEY]);
-    reset();
-    social.reset();
-    router.replace('/phone');
-  };
 
   return (
     <Screen back={false} bottomInset={false}>
@@ -69,6 +61,7 @@ export default function MyProfile() {
           {me.verification === 'verified' ? <Pill label="Selfie verified" icon="verified" color="primary" size="md" /> : null}
           {me.verification === 'pending' ? <Pill label="Verification pending" icon="verified_user" color="primary" size="md" /> : null}
           {incognito ? <Pill label="Incognito on" icon="visibility_off" color="primary" size="md" /> : null}
+          {social.state.paused ? <Pill label="Profile paused" icon="pause_circle" color="secondary" size="md" /> : null}
           <Pill label={intentLabel(intent)} icon="favorite" iconColor="secondary" color="onSecondaryFixed" bg="secondaryFixed" size="md" />
         </View>
       </View>
@@ -194,7 +187,6 @@ export default function MyProfile() {
             <Icon name="chevron_right" size={20} color="tertiary" />
           </Card>
         ))}
-        <Button title={isBackendConfigured ? 'Log out' : 'Log out & reset demo'} variant="tonal" size="md" haptics="none" onPress={logOut} />
         <Text variant="labelSm" color="tertiary" center>
           {isBackendConfigured ? 'Makoma · your profile is saved to your account' : 'Makoma prototype · demo data stays on this device'}
         </Text>

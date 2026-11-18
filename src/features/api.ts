@@ -172,3 +172,35 @@ export async function blockProfile(targetId: string) {
   const { error } = await supabase.from('blocks').insert({ blocked_id: targetId });
   if (error) throw error;
 }
+
+// ---- Matches & account ----------------------------------------------------
+
+export async function unmatch(matchId: string) {
+  const { error } = await supabase.rpc('unmatch', { p_match: matchId });
+  if (error) throw error;
+}
+
+export async function markRead(matchId: string) {
+  const { error } = await supabase.rpc('mark_read', { p_match: matchId });
+  if (error) throw error;
+}
+
+export async function unblockProfile(targetId: string) {
+  const { error } = await supabase.from('blocks').delete().eq('blocked_id', targetId);
+  if (error) throw error;
+}
+
+/** Pause = hidden from Discover and Likes; matches and chats stay. */
+export async function setPaused(paused: boolean) {
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) throw new Error('Not signed in');
+  const { error } = await supabase.from('profiles').update({ is_active: !paused }).eq('id', auth.user.id);
+  if (error) throw error;
+}
+
+/** Permanently deletes the account and personal data (payment records are kept, anonymised). */
+export async function deleteMyAccount() {
+  const { error } = await supabase.rpc('delete_my_account');
+  if (error) throw error;
+  await supabase.auth.signOut().catch(() => {});
+}

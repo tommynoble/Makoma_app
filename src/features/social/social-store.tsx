@@ -1,5 +1,5 @@
 import { createContext, use, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { likeProfile, passProfile, sendText, sendVoiceNote } from '@/features/api';
+import { blockProfile, likeProfile, markRead as apiMarkRead, passProfile, reportProfile, sendText, sendVoiceNote, setPaused as apiSetPaused, unblockProfile, unmatch as apiUnmatch } from '@/features/api';
 import { fetchDeck, fetchIncoming, fetchMatches, fetchMessages, subscribeMessages } from '@/features/backend/remote';
 import { buildDeck, incomingLikes } from '@/features/discover/deck';
 import { mockProfileById, type DemoProfile } from '@/features/mock-data';
@@ -28,8 +28,22 @@ export interface MatchRecord {
   profileId: string;
   createdAt: string;
 }
+export type NotificationKey = 'matches' | 'messages' | 'likes' | 'reminders';
+export interface DatePlan {
+  place: string;
+  when: string;
+  contactName: string;
+  contactPhone: string;
+  sharedAt?: string;
+}
 export interface SocialState {
   liked: Record<string, LikeRecord>;
+  /** People you blocked: never shown again anywhere. */
+  blocked: string[];
+  /** Hidden from Discover and Likes; matches and chats stay. */
+  paused: boolean;
+  notifications: Record<NotificationKey, boolean>;
+  datePlans: Record<string, DatePlan>;
   passed: string[];
   matches: Record<string, MatchRecord>;
   messages: Record<string, Message[]>;
@@ -39,6 +53,8 @@ export interface SocialState {
 }
 
 export const SOCIAL_KEY = 'makoma.social.v1';
+export const DEFAULT_NOTIFICATIONS: Record<NotificationKey, boolean> = { matches: true, messages: true, likes: true, reminders: true };
+const extras = { blocked: [] as string[], paused: false, notifications: DEFAULT_NOTIFICATIONS, datePlans: {} as Record<string, DatePlan> };
 export const DEFAULT_FILTERS: DiscoverFilters = {
   intents: ['marriage', 'serious', 'friendship_networking'],
   minAge: 21,
@@ -50,6 +66,7 @@ export const DEFAULT_FILTERS: DiscoverFilters = {
 
 const t0 = '2026-11-17T18:00:00Z';
 const demoSeed: SocialState = {
+  ...extras,
   liked: { akosua: { at: t0 } },
   passed: [],
   matches: { 'm-akosua': { id: 'm-akosua', profileId: 'akosua', createdAt: t0 } },
@@ -62,7 +79,7 @@ const demoSeed: SocialState = {
   },
   filters: DEFAULT_FILTERS,
 };
-const liveSeed: SocialState = { liked: {}, passed: [], matches: {}, messages: {}, filters: DEFAULT_FILTERS };
+const liveSeed: SocialState = { ...extras, liked: {}, passed: [], matches: {}, messages: {}, filters: DEFAULT_FILTERS };
 
 type NewMessage = { kind: 'text'; body: string } | { kind: 'voice'; audioUrl: string; durationMs: number } | { kind: 'gift'; giftId: string; offerId: string };
 type LikeOpts = { rose?: boolean; comment?: string; promptId?: string };
@@ -92,6 +109,15 @@ interface SocialApi {
   pass: (profileId: string) => Promise<void>;
   send: (matchId: string, message: NewMessage) => Promise<void>;
   setFilters: (filters: DiscoverFilters) => void;
+  /** Block someone (and end any match). Optionally file a report first. */
+  block: (profileId: string, report?: { reason: string; details?: string }) => Promise<void>;
+  /** File a report without blocking. */
+  report: (profileId: string, reason: string, details?: string) => Promise<void>;
+  unblock: (profileId: string) => Promise<void>;
+  unmatch: (matchId: string) => Promise<void>;
+  setPaused: (paused: boolean) => Promise<void>;
+  setNotification: (key: NotificationKey, on: boolean) => void;
+  saveDatePlan: (matchId: string, plan: DatePlan) => void;
   buyIncognito: (hours: number) => void;
   endIncognito: () => void;
   reset: () => void;
@@ -186,7 +212,16 @@ export function SocialProvider({ children }: { children: ReactNode }) {
         fetchMessages(matchId, me)
           .then((list) => alive && setState((s) => ({ ...s, messages: { ...s.messages, [matchId]: list } })))
           .catch((e) => setError(e?.message ?? 'Could not load messages.'));
-        stop = subscribeMessages(matchId, me, (m) => putMessage(matchId, m));
+        apiMarkRead(matchId).catch(() => {});
+        stop = subscribeMessages(
+          matchId,
+          me,
+          (m) => {
+            putMessage(matchId, m);
+            if (m.senderId === 'them') apiMarkRead(matchId).catch(() => {});
+          },
+          (id, readAt) => setState((s) => ({ ...s, messages: { ...s.messages, [matchId]: (s.messages[matchId] ?? []).map((x) => (x.id === id ? { ...x, readAt } : x)) } })),
+        );
       });
       return () => {
         alive = false;
@@ -269,13 +304,37 @@ export function SocialProvider({ children }: { children: ReactNode }) {
               message.kind === 'voice'
                 ? { id: uid(), matchId, senderId: 'them', kind: 'voice', audioUrl: '', durationMs: 8000 + (n % 4) * 3000, createdAt: now() }
                 : { id: uid(), matchId, senderId: 'them', kind: 'text', body: profile.replies[n % profile.replies.length], createdAt: now() };
-            return { ...s, messages: { ...s.messages, [matchId]: [...list, reply] } };
+            const seen = list.map((m) => (m.senderId === 'me' && !m.readAt ? { ...m, readAt: now() } : m));
+            return { ...s, messages: { ...s.messages, [matchId]: [...seen, reply] } };
           });
         }, 2200),
       );
     },
     [setState],
   );
+
+  /** Remove someone from matches, chats, deck and likes (and remember the block). */
+  const dropProfile = (profileId: string, blocked: boolean) => {
+    setDeckRemote((d) => d.filter((p) => p.id !== profileId));
+    setIncomingRemote((d) => d.filter((p) => p.id !== profileId));
+    setState((s) => {
+      const gone = Object.values(s.matches).filter((m) => m.profileId === profileId).map((m) => m.id);
+      const matches = { ...s.matches };
+      const messages = { ...s.messages };
+      for (const id of gone) {
+        delete matches[id];
+        delete messages[id];
+      }
+      return {
+        ...s,
+        matches,
+        messages,
+        // Demo: an unmatched person shouldn't come back as a new like or in the deck.
+        passed: blocked ? s.passed : [...new Set([...s.passed, profileId])],
+        blocked: blocked ? [...new Set([...s.blocked, profileId])] : s.blocked,
+      };
+    });
+  };
 
   const api: SocialApi = {
     state,
@@ -293,6 +352,33 @@ export function SocialProvider({ children }: { children: ReactNode }) {
     pass,
     send,
     setFilters: (filters) => setState((s) => ({ ...s, filters })),
+    block: async (profileId, report) => {
+      if (live) {
+        if (report) await reportProfile(profileId, report.reason, report.details);
+        await blockProfile(profileId);
+      }
+      dropProfile(profileId, true);
+      if (live) refresh();
+    },
+    report: async (profileId, reason, details) => {
+      if (live) await reportProfile(profileId, reason, details);
+    },
+    unblock: async (profileId) => {
+      if (live) await unblockProfile(profileId);
+      setState((s) => ({ ...s, blocked: s.blocked.filter((x) => x !== profileId) }));
+    },
+    unmatch: async (matchId) => {
+      const profileId = state.matches[matchId]?.profileId;
+      if (live) await apiUnmatch(matchId);
+      if (profileId) dropProfile(profileId, false);
+    },
+    setPaused: async (paused) => {
+      if (live) await apiSetPaused(paused);
+      setState((s) => ({ ...s, paused }));
+      if (live) refresh();
+    },
+    setNotification: (key, on) => setState((s) => ({ ...s, notifications: { ...s.notifications, [key]: on } })),
+    saveDatePlan: (matchId, plan) => setState((s) => ({ ...s, datePlans: { ...s.datePlans, [matchId]: plan } })),
     // TODO(live): sold through Paystack; the webhook sets profiles.incognito_until.
     buyIncognito: (hours) => setState((s) => ({ ...s, incognitoUntil: new Date(Date.now() + hours * 3600_000).toISOString() })),
     endIncognito: () => setState((s) => ({ ...s, incognitoUntil: undefined })),

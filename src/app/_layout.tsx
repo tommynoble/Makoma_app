@@ -113,6 +113,20 @@ function AppStack() {
       <Stack.Screen name="edit-prompts" options={{ ...header, title: 'Your prompts' }} />
       <Stack.Screen name="treats" options={{ ...header, title: 'My treats' }} />
       <Stack.Screen name="settings/privacy" options={{ ...header, title: 'Privacy' }} />
+      <Stack.Screen name="settings/index" options={{ ...header, title: 'Settings' }} />
+      <Stack.Screen name="settings/blocked" options={{ ...header, title: 'Blocked people' }} />
+      <Stack.Screen name="settings/delete-account" options={{ ...header, title: 'Delete account' }} />
+      <Stack.Screen name="safety" options={{ ...header, title: 'Safety centre' }} />
+      <Stack.Screen name="legal/[doc]" options={{ ...header, title: '' }} />
+      <Stack.Screen name="date-plan" options={{ ...header, title: 'Date safety', presentation: 'modal' }} />
+      <Stack.Screen
+        name="report"
+        options={{ presentation: 'formSheet', sheetGrabberVisible: true, sheetAllowedDetents: [0.92], sheetCornerRadius: 28, contentStyle: { backgroundColor: colors.surface } }}
+      />
+      <Stack.Screen
+        name="match-actions"
+        options={{ presentation: 'formSheet', sheetGrabberVisible: true, sheetAllowedDetents: [0.5], sheetCornerRadius: 28, contentStyle: { backgroundColor: colors.surface } }}
+      />
     </Stack>
   );
 }

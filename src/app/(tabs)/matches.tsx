@@ -18,6 +18,9 @@ function preview(m: Message | undefined, name: string) {
   return { text: `${who}Sent a treat${o ? ` · ${o.label} (${formatCedis(o.pricePesewas)})` : ''}`, italic: false };
 }
 
+const HELLO_WINDOW_H = 72;
+const helloHoursLeft = (createdAt: string) => Math.ceil(HELLO_WINDOW_H - (Date.now() - new Date(createdAt).getTime()) / 3_600_000);
+
 function timeAgo(iso: string) {
   const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
   if (mins < 1) return 'now';
@@ -75,6 +78,10 @@ export default function Matches() {
             {matches.map((m, i) => {
               const pv = preview(m.last, m.profile.firstName);
               const unread = m.last?.senderId === 'them';
+              const iSpoke = (state.messages[m.id] ?? []).some((x) => x.senderId === 'me');
+              // New matches have 3 days for a first hello: a nudge, so matches turn into conversations.
+              const hoursLeft = helloHoursLeft(m.createdAt);
+              const status = !iSpoke ? (hoursLeft > 0 ? `Say hello · ${hoursLeft > 24 ? `${Math.ceil(hoursLeft / 24)} days` : `${hoursLeft}h`} left` : 'Say hello before it’s too late') : unread ? 'Your turn' : null;
               return (
                 <Enter key={m.id} index={i}>
                   <Card rounded="card" padding="margin" shadow="warm" onPress={() => router.push(`/chat/${m.id}`)} accessibilityLabel={`Conversation with ${m.profile.firstName}${unread ? ', new message' : ''}`} style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center' }}>
@@ -97,6 +104,14 @@ export default function Matches() {
                       <Text italic={pv.italic} numberOfLines={2} color={unread ? 'onSurface' : 'tertiary'} style={{ fontSize: 15, lineHeight: 21, fontFamily: unread && !pv.italic ? fonts.sansSemiBold : undefined }}>
                         {pv.text}
                       </Text>
+                      {status ? (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                          <Icon name={iSpoke ? 'chat_bubble' : 'hourglass_top'} size={14} color="secondary" />
+                          <Text variant="labelSm" color="secondary">
+                            {status}
+                          </Text>
+                        </View>
+                      ) : null}
                     </View>
                   </Card>
                 </Enter>

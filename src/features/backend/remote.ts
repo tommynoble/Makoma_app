@@ -51,13 +51,14 @@ interface MessageRow {
   audio_path?: string | null;
   duration_ms?: number | null;
   created_at: string;
+  read_at?: string | null;
   gift_id?: string | null;
   offer_id?: string | null;
   gifts?: { offer_id: string } | null;
 }
 
 export function rowToMessage(r: MessageRow, matchId: string, me: string, audioUrl = ''): Message {
-  const base = { id: r.id, matchId, senderId: r.sender_id === me ? 'me' : 'them', createdAt: r.created_at };
+  const base = { id: r.id, matchId, senderId: r.sender_id === me ? 'me' : 'them', createdAt: r.created_at, readAt: r.read_at ?? undefined };
   if (r.kind === 'voice') return { ...base, kind: 'voice', audioUrl, durationMs: r.duration_ms ?? 0 };
   if (r.kind === 'gift') return { ...base, kind: 'gift', giftId: r.gift_id ?? '', offerId: r.gifts?.offer_id ?? r.offer_id ?? '' };
   return { ...base, kind: 'text', body: r.body ?? '' };
@@ -91,7 +92,7 @@ export async function fetchMatches(me: string): Promise<RemoteMatch[]> {
 export async function fetchMessages(matchId: string, me: string): Promise<Message[]> {
   const { data, error } = await supabase
     .from('messages')
-    .select('id, sender_id, kind, body, audio_path, duration_ms, gift_id, created_at, gifts(offer_id)')
+    .select('id, sender_id, kind, body, audio_path, duration_ms, gift_id, created_at, read_at, gifts(offer_id)')
     .eq('match_id', matchId)
     .order('created_at');
   if (error) throw error;
@@ -100,8 +101,8 @@ export async function fetchMessages(matchId: string, me: string): Promise<Messag
   return rows.map((r) => rowToMessage(r, matchId, me, voice[r.audio_path ?? '']));
 }
 
-/** Live inserts for one conversation. */
-export function subscribeMessages(matchId: string, me: string, onMessage: (m: Message) => void) {
+/** Live inserts (new messages) and updates (read receipts) for one conversation. */
+export function subscribeMessages(matchId: string, me: string, onMessage: (m: Message) => void, onRead?: (id: string, readAt: string) => void) {
   const channel = supabase
     .channel(`match:${matchId}`)
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `match_id=eq.${matchId}` }, async (payload) => {
@@ -112,6 +113,10 @@ export function subscribeMessages(matchId: string, me: string, onMessage: (m: Me
       }
       const voice = await signVoice([row]).catch(() => ({}) as Record<string, string>);
       onMessage(rowToMessage(row, matchId, me, voice[row.audio_path ?? '']));
+    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `match_id=eq.${matchId}` }, (payload) => {
+      const row = payload.new as MessageRow;
+      if (row.read_at) onRead?.(row.id, row.read_at);
     })
     .subscribe();
   return () => {

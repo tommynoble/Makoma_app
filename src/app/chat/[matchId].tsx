@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
-import { FlatList, KeyboardAvoidingView, Pressable, TextInput, View } from 'react-native';
+import { FlatList, KeyboardAvoidingView, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -12,9 +12,12 @@ import { fetchGiftOffers, fetchGiftUnlock, startGift } from '@/features/api';
 import { computeGiftUnlock } from '@/features/gifts/unlock';
 import { useSocial } from '@/features/social/social-store';
 import { useVoiceRecorder } from '@/features/voice/use-voice-recorder';
+import { conversationStarters } from '@/features/chat/starters';
+import { useMyProfile } from '@/features/me';
+import { INCOMING_NUDGE, OUTGOING_CHECK, scamSignal, type ScamSignal } from '@/features/safety/scam-check';
 import { haptic, TOAST_IN, TOAST_OUT } from '@/lib/motion';
 import { isBackendConfigured } from '@/lib/supabase';
-import { colors, radius, shadows, spacing, type } from '@/theme';
+import { colors, fonts, radius, shadows, spacing, type } from '@/theme';
 import type { GiftOffer, GiftUnlock, Message } from '@/types/domain';
 
 /**
@@ -39,6 +42,8 @@ export default function Chat() {
   const [showTray, setShowTray] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const rec = useVoiceRecorder();
+  const me = useMyProfile();
+  const [check, setCheck] = useState<{ body: string; signal: ScamSignal } | null>(null);
 
   useEffect(() => {
     fetchGiftOffers().then(setOffers).catch(() => setOffers([]));
@@ -78,9 +83,16 @@ export default function Chat() {
     );
   }
 
-  const onSend = async () => {
+  const onSend = async (force = false) => {
     const body = text.trim();
     if (!body) return;
+    // A gentle check before sending money talk or contact details. Never blocks.
+    const signal = scamSignal(body);
+    if (signal && !force) {
+      haptic.select();
+      return setCheck({ body, signal });
+    }
+    setCheck(null);
     setText('');
     haptic.light();
     try {
@@ -136,6 +148,64 @@ export default function Chat() {
       boxShadow: shadows.sm,
     }) as const;
 
+  const lastMineId = [...messages].reverse().find((m) => m.senderId === 'me')?.id;
+  const bubbleFor = (item: Message) => {
+      const mine = item.senderId === 'me';
+      const fg = mine ? 'onPrimary' : 'onSurface';
+      if (item.kind === 'text') {
+        return (
+          <View style={bubble(mine)}>
+            <Text color={fg} style={type.bodyMd}>
+              {item.body}
+            </Text>
+          </View>
+        );
+      }
+      if (item.kind === 'voice') {
+        return (
+          <View style={bubble(mine)}>
+            <VoiceBubble id={item.id} uri={item.audioUrl || undefined} durationMs={item.durationMs} mine={mine} />
+          </View>
+        );
+      }
+      const o = offers.find((x) => x.id === item.offerId);
+      return (
+        <View style={[bubble(mine), { backgroundColor: colors.secondaryFixed, flexDirection: 'row', alignItems: 'center', gap: spacing.sm }]}>
+          <Icon name="redeem" size={20} color="secondary" />
+          <Text variant="labelMd" color="onSecondaryContainer">
+            {mine ? 'You sent a treat' : 'Sent you a treat'}: {o?.label ?? 'voucher'}
+          </Text>
+        </View>
+      );
+  };
+  const renderMessage = (item: Message) => {
+    const signal = item.kind === 'text' && item.senderId === 'them' ? scamSignal(item.body) : null;
+    const seen = item.id === lastMineId && item.readAt;
+    return (
+      <View style={{ gap: 6 }}>
+        {bubbleFor(item)}
+        {signal ? (
+          <View style={{ flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start', maxWidth: '86%', padding: 12, borderRadius: radius.md, backgroundColor: colors.secondaryFixed }}>
+            <Icon name="warning" size={18} color="secondary" />
+            <View style={{ flex: 1, gap: 4 }}>
+              <Text variant="labelMd" color="onSecondaryFixed" style={{ fontFamily: fonts.sansMedium }}>
+                {INCOMING_NUDGE[signal]}
+              </Text>
+              <Text variant="labelMd" color="secondary" style={{ fontFamily: fonts.sansBold }} onPress={() => router.push({ pathname: '/report', params: { profileId: other.id } })} accessibilityRole="link">
+                Report this
+              </Text>
+            </View>
+          </View>
+        ) : null}
+        {seen ? (
+          <Text variant="labelSm" color="tertiary" style={{ alignSelf: 'flex-end', marginRight: spacing.xs }} accessibilityLabel="Seen">
+            Seen
+          </Text>
+        ) : null}
+      </View>
+    );
+  };
+
   return (
     <KeyboardAvoidingView behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={insets.top + 44} style={{ flex: 1, backgroundColor: colors.surface }}>
       <Stack.Screen
@@ -156,6 +226,7 @@ export default function Chat() {
               </View>
             </PressableScale>
           ),
+          headerRight: () => <IconButton icon="more_horiz" label="More options" onPress={() => router.push({ pathname: '/match-actions', params: { matchId } })} />,
         }}
       />
       <FlatList
@@ -174,6 +245,20 @@ export default function Chat() {
                 Makoma never asks you for money, and no one should ask you to send gifts. Report anyone who does.
               </Text>
             </View>
+            {messages.length >= 6 && !social.state.datePlans[matchId]?.sharedAt ? (
+              <PressableScale
+                onPress={() => router.push({ pathname: '/date-plan', params: { matchId } })}
+                accessibilityRole="button"
+                accessibilityLabel="Planning to meet? Share your date plan with someone you trust"
+                style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md, borderRadius: radius.md, backgroundColor: colors.surfaceContainerLowest, borderWidth: 1, borderColor: colors.hairline }}
+              >
+                <Icon name="edit_calendar" size={20} color="primary" />
+                <Text variant="labelMd" style={{ flex: 1, fontFamily: fonts.sansSemiBold }}>
+                  Planning to meet {other.firstName}? Share your date plan with someone you trust.
+                </Text>
+                <Icon name="chevron_right" size={18} color="tertiary" />
+              </PressableScale>
+            ) : null}
           </View>
         }
         ListFooterComponent={
@@ -192,35 +277,7 @@ export default function Chat() {
             Start with a greeting. Ask how their day is going, or send a voice note.
           </Text>
         }
-        renderItem={({ item }) => {
-          const mine = item.senderId === 'me';
-          const fg = mine ? 'onPrimary' : 'onSurface';
-          if (item.kind === 'text') {
-            return (
-              <View style={bubble(mine)}>
-                <Text color={fg} style={type.bodyMd}>
-                  {item.body}
-                </Text>
-              </View>
-            );
-          }
-          if (item.kind === 'voice') {
-            return (
-              <View style={bubble(mine)}>
-                <VoiceBubble id={item.id} uri={item.audioUrl || undefined} durationMs={item.durationMs} mine={mine} />
-              </View>
-            );
-          }
-          const o = offers.find((x) => x.id === item.offerId);
-          return (
-            <View style={[bubble(mine), { backgroundColor: colors.secondaryFixed, flexDirection: 'row', alignItems: 'center', gap: spacing.sm }]}>
-              <Icon name="redeem" size={20} color="secondary" />
-              <Text variant="labelMd" color="onSecondaryContainer">
-                {mine ? 'You sent a treat' : 'Sent you a treat'}: {o?.label ?? 'voucher'}
-              </Text>
-            </View>
-          );
-        }}
+        renderItem={({ item }) => renderMessage(item)}
       />
 
       {notice ? (
@@ -289,6 +346,57 @@ export default function Chat() {
         </Animated.View>
       ) : null}
 
+      {check ? (
+        <Animated.View entering={TOAST_IN} exiting={TOAST_OUT}>
+          <Card rounded="lg" shadow="xl" style={{ marginHorizontal: spacing.sm, marginBottom: spacing.sm, gap: spacing.sm }}>
+            <View style={{ flexDirection: 'row', gap: spacing.sm, alignItems: 'center' }}>
+              <Icon name="shield_person" size={20} color="secondary" />
+              <Text variant="labelLg" style={{ flex: 1, fontFamily: fonts.sansBold }}>
+                {OUTGOING_CHECK[check.signal].title}
+              </Text>
+            </View>
+            <Text variant="labelMd" color="tertiary" style={{ fontFamily: fonts.sansMedium }}>
+              {OUTGOING_CHECK[check.signal].body}
+            </Text>
+            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+              <View style={{ flex: 1 }}>
+                <Button title="Edit message" variant="tonal" size="md" onPress={() => setCheck(null)} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Button title="Send anyway" size="md" onPress={() => onSend(true)} />
+              </View>
+            </View>
+          </Card>
+        </Animated.View>
+      ) : null}
+
+      {!check && !text && !messages.some((m) => m.senderId === 'me') ? (
+        <View style={{ gap: spacing.xs, paddingBottom: spacing.sm }}>
+          <Text variant="labelSm" color="tertiary" uppercase style={{ paddingHorizontal: spacing.md }}>
+            Conversation starters
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingHorizontal: spacing.md }}>
+            {conversationStarters(me, other).map((st) => (
+              <PressableScale
+                key={st}
+                scaleTo={0.97}
+                onPress={() => {
+                  haptic.select();
+                  setText(st);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`Use starter: ${st}`}
+                style={{ maxWidth: 260, paddingHorizontal: spacing.md, paddingVertical: 10, borderRadius: radius.md, backgroundColor: colors.surfaceContainerLowest, borderWidth: 1, borderColor: colors.hairline }}
+              >
+                <Text variant="labelMd" numberOfLines={3} style={{ fontFamily: fonts.sansMedium }}>
+                  {st}
+                </Text>
+              </PressableScale>
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
+
       <View style={{ flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: Math.max(insets.bottom, spacing.sm), alignItems: 'center', backgroundColor: colors.surface, boxShadow: shadows.tabBar }}>
         <GiftButton
           unlock={unlock}
@@ -308,7 +416,7 @@ export default function Chat() {
           multiline
         />
         {text.trim() ? (
-          <IconButton icon="send" label="Send message" filled size={48} bg="primary" color="onPrimary" onPress={onSend} />
+          <IconButton icon="send" label="Send message" filled size={48} bg="primary" color="onPrimary" onPress={() => onSend()} />
         ) : (
           <IconButton icon={rec.isRecording ? 'stop' : 'mic'} label={rec.isRecording ? 'Stop and send voice note' : 'Record a voice note'} filled size={48} bg={rec.isRecording ? 'error' : 'secondary'} color="onSecondary" onPress={onVoice} />
         )}

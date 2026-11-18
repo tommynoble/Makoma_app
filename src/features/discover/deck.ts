@@ -22,10 +22,12 @@ export function matchesFilters(p: DemoProfile, f: DiscoverFilters) {
 /** Profiles still to meet: not liked, passed or matched, and within the filters. Demo only. */
 export function buildDeck(s: SocialState): DemoProfile[] {
   const matched = new Set(Object.values(s.matches).map((m) => m.profileId));
-  return MOCK_PROFILES.filter((p) => !s.liked[p.id] && !s.passed.includes(p.id) && !matched.has(p.id) && matchesFilters(p, s.filters));
+  const blocked = new Set(s.blocked ?? []);
+  return MOCK_PROFILES.filter((p) => !s.liked[p.id] && !s.passed.includes(p.id) && !matched.has(p.id) && !blocked.has(p.id) && matchesFilters(p, s.filters));
 }
 
 /** People who liked the user and are still waiting for an answer. */
 export function incomingLikes(s: SocialState): DemoProfile[] {
-  return MOCK_PROFILES.filter((p) => p.likesYou && !s.liked[p.id] && !s.passed.includes(p.id)).sort((a, b) => (b.likesYou!.at > a.likesYou!.at ? 1 : -1));
+  const blocked = new Set(s.blocked ?? []);
+  return MOCK_PROFILES.filter((p) => p.likesYou && !s.liked[p.id] && !s.passed.includes(p.id) && !blocked.has(p.id)).sort((a, b) => (b.likesYou!.at > a.likesYou!.at ? 1 : -1));
 }

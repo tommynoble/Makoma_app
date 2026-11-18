@@ -125,3 +125,23 @@ select profile_json('00000000-0000-0000-0000-00000000000c');
 set request.jwt.sub = '00000000-0000-0000-0000-00000000000a';
 select like_profile('00000000-0000-0000-0000-00000000000b') is not null;
 select likes_received();
+
+-- ---- Safety & account (0003) ----
+\echo '28. Akosua cannot unmatch Kwame and Esi -> expect "not your match"'
+set request.jwt.sub = '00000000-0000-0000-0000-00000000000b';
+select unmatch((select id from matches where user_b = '00000000-0000-0000-0000-00000000000c' or user_a = '00000000-0000-0000-0000-00000000000c' limit 1));
+\echo '29. Esi marks Kwame''s messages read -> expect a positive count'
+set request.jwt.sub = '00000000-0000-0000-0000-00000000000c';
+select mark_read((select id from matches where '00000000-0000-0000-0000-00000000000c' in (user_a, user_b) limit 1)) > 0;
+\echo '30. Kwame unmatches Esi -> his matches no longer include Esi: expect ["Akosua"]'
+set request.jwt.sub = '00000000-0000-0000-0000-00000000000a';
+select unmatch((select id from matches where '00000000-0000-0000-0000-00000000000c' in (user_a, user_b) limit 1));
+select jsonb_path_query_array(my_matches(), '$[*].profile.firstName');
+\echo '31. Kwame blocks Akosua -> his matches are empty: expect []'
+insert into blocks (blocked_id) values ('00000000-0000-0000-0000-00000000000b');
+select my_matches();
+\echo '32. Esi deletes her account -> profile gone: expect 0'
+set request.jwt.sub = '00000000-0000-0000-0000-00000000000c';
+select delete_my_account();
+reset role;
+select count(*) from profiles where id = '00000000-0000-0000-0000-00000000000c';

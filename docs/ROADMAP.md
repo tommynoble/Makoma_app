@@ -15,9 +15,14 @@ written (`src/features/backend/`). What's left is configuration: see `docs/SUPAB
 - [ ] Run `scripts/connect-supabase.sh` once the project exists
 
 ## 2. Safety basics (needed before any launch)
-- [ ] Report and block from any profile or chat
-- [ ] Unmatch
-- [ ] Review queue for selfie verification and reports
+- [x] Report and block from any profile or chat
+- [x] Unmatch
+- [x] Scam nudges in chat (money, moving off-app, investments)
+- [x] Date safety plan shared with a trusted contact; Safety centre with emergency numbers
+- [x] Settings: pause profile, notification preferences, blocked list, delete account, legal pages (drafts)
+- [x] Daily pick, conversation starters, "your turn" and 3-day hello nudges, read receipts
+- [ ] Review queue for selfie verification and reports (admin dashboard, with the business work)
+- [ ] Lawyer review of terms and privacy policy (Ghana Data Protection Act)
 
 ## 3. Development build
 Expo Go can't do push notifications and limits camera/audio.
