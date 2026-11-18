@@ -23,10 +23,11 @@ export const radius = {
 
 /** Soft, warm elevation levels used across the designs. */
 export const shadows = {
-  sm: '0 1px 2px rgba(10, 8, 5, 0.06)',
+  /** Layered, soft shadows so white cards lift off the light canvas. */
+  sm: '0 1px 3px rgba(10, 8, 5, 0.08), 0 1px 2px rgba(10, 8, 5, 0.04)',
   /** v4 card shadow. */
-  warm: '0 8px 30px rgba(10, 8, 5, 0.12)',
-  md: '0 4px 6px -1px rgba(44, 36, 30, 0.08), 0 2px 4px -2px rgba(44, 36, 30, 0.06)',
+  warm: '0 6px 20px rgba(10, 8, 5, 0.10), 0 1px 3px rgba(10, 8, 5, 0.06)',
+  md: '0 4px 14px rgba(10, 8, 5, 0.10), 0 1px 3px rgba(10, 8, 5, 0.06)',
   lg: '0 10px 15px -3px rgba(44, 36, 30, 0.10), 0 4px 6px -4px rgba(44, 36, 30, 0.08)',
   xl: '0 20px 25px -5px rgba(44, 36, 30, 0.12), 0 8px 10px -6px rgba(44, 36, 30, 0.08)',
   primaryGlow: '0 8px 20px -4px rgba(26, 74, 71, 0.35)',

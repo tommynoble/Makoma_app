@@ -5,21 +5,21 @@
  * hex value outside this file.
  */
 export const colors = {
-  /** Warm sand canvas: deep enough that white cards stand out (1.20:1, was 1.05:1). */
-  background: '#f3e9e1',
-  surface: '#f3e9e1',
-  surfaceBright: '#f3e9e1',
-  surfaceDim: '#e3cfc1',
+  /** Light, barely-warm canvas. Cards pop through edge + shadow, not a warm backdrop. */
+  background: '#f5f2ef',
+  surface: '#f5f2ef',
+  surfaceBright: '#f5f2ef',
+  surfaceDim: '#ddd5cf',
   /** Cards. */
   surfaceContainerLowest: '#ffffff',
   /** Tinted panel ON THE CANVAS (lighter than the canvas). */
-  surfaceContainerLow: '#fff7f2',
-  surfaceContainer: '#f8ede5',
-  /** Pills, chips and panels ON WHITE CARDS (darker than white, 1.25:1). */
-  surfaceContainerHigh: '#f2e3d8',
+  surfaceContainerLow: '#fbf9f7',
+  surfaceContainer: '#f4efeb',
+  /** Pills, chips and panels ON WHITE CARDS (darker than white, 1.21:1). */
+  surfaceContainerHigh: '#eee8e3',
   /** Tracks, disabled fills. */
-  surfaceContainerHighest: '#e3cfc1',
-  surfaceVariant: '#e3cfc1',
+  surfaceContainerHighest: '#ddd5cf',
+  surfaceVariant: '#ddd5cf',
   onSurface: '#0a0805',
   onSurfaceVariant: '#3d3530',
   inverseSurface: '#1f1a16',
@@ -65,7 +65,7 @@ export const colors = {
   errorContainer: '#ffdad6',
 
   /** Hairline border on cards and inputs. */
-  hairline: 'rgba(10, 8, 5, 0.10)',
+  hairline: 'rgba(10, 8, 5, 0.12)',
   /** Unselected controls (switch off, radio ring): 3:1+ on canvas and cards (WCAG 1.4.11). */
   control: '#7a6e66',
   /** Scrim behind sheets. */
