@@ -7,14 +7,33 @@ import { myUserId } from './session';
 const ext = (uri: string, fallback: string) => uri.match(/\.(\w{3,4})(?:\?|$)/)?.[1]?.toLowerCase() ?? fallback;
 const stamp = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
+/** Fails with a clear message instead of hanging forever on a bad connection. */
+function step<T>(label: string, work: PromiseLike<T>, ms = 30_000): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} took too long. Check your connection and try again.`)), ms);
+  });
+  return Promise.race([Promise.resolve(work), timeout]).finally(() => clearTimeout(timer));
+}
+async function must<T extends { error: { message: string } | null }>(label: string, work: PromiseLike<T>, ms?: number): Promise<T> {
+  const res = await step(label, work, ms);
+  if (res.error) throw new Error(`${label}: ${res.error.message}`);
+  return res;
+}
+
 /**
  * Saves the user's profile to Supabase: uploads new photos and the voice
  * intro, creates or updates the profile row, and replaces prompts and photo
- * rows. Returns a patch for the local draft (what is now uploaded).
+ * rows. Only the profile itself is required: if an extra (voice intro,
+ * prompts, selfie) fails, the save still succeeds and the extra is retried on
+ * the next save. Progress is reported as it happens so a retry never
+ * re-uploads what already went through.
  */
-export async function pushMyProfile(draft: OnboardingDraft): Promise<Partial<OnboardingDraft>> {
-  const uid = await myUserId();
+export async function pushMyProfile(draft: OnboardingDraft, onProgress?: (patch: Partial<OnboardingDraft>) => void): Promise<Partial<OnboardingDraft>> {
+  const uid = await step('Checking your sign-in', myUserId(), 15_000);
   const remote = { photoPaths: { ...(draft.remote?.photoPaths ?? {}) }, voiceUri: draft.remote?.voiceUri, voicePath: draft.remote?.voicePath, created: draft.remote?.created };
+  const progress = () => onProgress?.({ remote: { ...remote, photoPaths: { ...remote.photoPaths } } });
+  const problems: string[] = [];
 
   // 1. Photos: upload anything new. Bundled demo images (numbers) are never uploaded.
   const photoPaths: string[] = [];
@@ -27,20 +46,26 @@ export async function pushMyProfile(draft: OnboardingDraft): Promise<Partial<Onb
     let path = remote.photoPaths[src];
     if (!path) {
       const e = ext(src, 'jpg');
-      path = await uploadLocal('profile-photos', `${uid}/${stamp()}.${e}`, src, e === 'png' ? 'image/png' : 'image/jpeg');
+      path = await step('Uploading a photo', uploadLocal('profile-photos', `${uid}/${stamp()}.${e}`, src, e === 'png' ? 'image/png' : 'image/jpeg'), 60_000);
       remote.photoPaths[src] = path;
+      progress();
     }
     photoPaths.push(path);
   }
 
-  // 2. Voice intro.
+  // 2. Voice intro (optional: a failure here doesn't block the profile).
   if (draft.voiceIntro && draft.voiceIntro.uri !== remote.voiceUri && !isRef(draft.voiceIntro.uri)) {
-    remote.voicePath = await uploadLocal('voice-intros', `${uid}/${stamp()}.m4a`, draft.voiceIntro.uri, 'audio/m4a');
-    remote.voiceUri = draft.voiceIntro.uri;
+    try {
+      remote.voicePath = await step('Uploading your voice intro', uploadLocal('voice-intros', `${uid}/${stamp()}.m4a`, draft.voiceIntro.uri, 'audio/m4a'), 60_000);
+      remote.voiceUri = draft.voiceIntro.uri;
+      progress();
+    } catch (e: any) {
+      problems.push(e?.message ?? 'voice intro');
+    }
   }
   if (!draft.voiceIntro) remote.voicePath = undefined;
 
-  // 3. Profile row. birth_date and gender are set once, at creation.
+  // 3. Profile row (required). birth_date and gender are set once, at creation.
   const fields = {
     first_name: draft.firstName?.trim() ?? '',
     interested_in: draft.interestedIn,
@@ -61,43 +86,43 @@ export async function pushMyProfile(draft: OnboardingDraft): Promise<Partial<Onb
     voice_prompt_text: remote.voicePath ? (draft.voicePromptText ?? null) : null,
     last_active_at: new Date().toISOString(),
   };
-  const { data: existing, error: readErr } = await supabase.from('profiles').select('id').eq('id', uid).maybeSingle();
-  if (readErr) throw readErr;
+  const { data: existing } = await must('Loading your profile', supabase.from('profiles').select('id').eq('id', uid).maybeSingle());
   if (existing) {
-    const { error } = await supabase.from('profiles').update(fields).eq('id', uid);
-    if (error) throw error;
+    await must('Saving your profile', supabase.from('profiles').update(fields).eq('id', uid));
   } else {
     if (!draft.birthDate || !draft.gender) throw new Error('Add your birthday and gender to finish your profile.');
-    const { error } = await supabase.from('profiles').insert({ id: uid, birth_date: draft.birthDate, gender: draft.gender, ...fields });
-    if (error) throw error;
+    await must('Creating your profile', supabase.from('profiles').insert({ id: uid, birth_date: draft.birthDate, gender: draft.gender, ...fields }));
   }
   remote.created = true;
+  progress();
 
-  // 4. Prompts and photo rows: replace with the current set.
-  const prompts = Object.values(draft.prompts)
-    .filter((p) => p.answer.trim())
-    .map((p, i) => ({ profile_id: uid, prompt_id: p.promptId, answer: p.answer.trim().slice(0, 250), position: i }));
-  const delP = await supabase.from('profile_prompts').delete().eq('profile_id', uid);
-  if (delP.error) throw delP.error;
-  if (prompts.length) {
-    const { error } = await supabase.from('profile_prompts').insert(prompts);
-    if (error) throw error;
-  }
-  const delPh = await supabase.from('photos').delete().eq('profile_id', uid);
-  if (delPh.error) throw delPh.error;
-  if (photoPaths.length) {
-    const { error } = await supabase.from('photos').insert(photoPaths.map((storage_path, position) => ({ profile_id: uid, storage_path, position })));
-    if (error) throw error;
+  // 4. Photo rows (required when photos changed) and prompts (optional).
+  await must('Saving your photos', supabase.from('photos').delete().eq('profile_id', uid));
+  if (photoPaths.length) await must('Saving your photos', supabase.from('photos').insert(photoPaths.map((storage_path, position) => ({ profile_id: uid, storage_path, position }))));
+  try {
+    const prompts = Object.values(draft.prompts)
+      .filter((p) => p.answer.trim())
+      .map((p, i) => ({ profile_id: uid, prompt_id: p.promptId, answer: p.answer.trim().slice(0, 250), position: i }));
+    await must('Saving your prompts', supabase.from('profile_prompts').delete().eq('profile_id', uid));
+    if (prompts.length) await must('Saving your prompts', supabase.from('profile_prompts').insert(prompts));
+  } catch (e: any) {
+    problems.push(e?.message ?? 'prompts');
   }
 
-  // 5. A selfie taken during onboarding can only be filed once the profile exists.
-  if (draft.pendingSelfie) {
-    const path = await uploadLocal('verification-selfies', `${uid}/${stamp()}.jpg`, draft.pendingSelfie.uri, 'image/jpeg');
-    const { error } = await supabase.from('verification_requests').insert({ profile_id: uid, selfie_path: path, pose: draft.pendingSelfie.pose });
-    if (error) throw error;
+  // 5. A selfie taken during onboarding is filed once the profile exists (optional; retried next save).
+  let pendingSelfie = draft.pendingSelfie;
+  if (pendingSelfie) {
+    try {
+      const path = await step('Sending your selfie', uploadLocal('verification-selfies', `${uid}/${stamp()}.jpg`, pendingSelfie.uri, 'image/jpeg'), 60_000);
+      await must('Sending your selfie', supabase.from('verification_requests').insert({ profile_id: uid, selfie_path: path, pose: pendingSelfie.pose }));
+      pendingSelfie = undefined;
+    } catch (e: any) {
+      problems.push(e?.message ?? 'selfie');
+    }
   }
 
-  return { remote, pendingSelfie: undefined };
+  if (problems.length) console.warn('Profile saved; some extras will retry next time:', problems);
+  return { remote, pendingSelfie };
 }
 
 /** Loads the user's profile from Supabase (e.g. signing in on a new phone). Null if they have none yet. */

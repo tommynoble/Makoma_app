@@ -14,7 +14,7 @@ export function useSaveProfile() {
     async (patch: Partial<OnboardingDraft> = {}) => {
       update(patch);
       if (!isBackendConfigured) return;
-      const result = await pushMyProfile({ ...draft, ...patch });
+      const result = await pushMyProfile({ ...draft, ...patch }, update);
       update(result);
     },
     [draft, update],

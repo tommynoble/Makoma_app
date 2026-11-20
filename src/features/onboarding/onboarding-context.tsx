@@ -1,4 +1,4 @@
-import { createContext, use, type ReactNode } from 'react';
+import { createContext, use, useCallback, useMemo, type ReactNode } from 'react';
 import type { VoiceClip } from '@/features/voice/use-voice-recorder';
 import { usePersistentState } from '@/lib/persist';
 import type { Gender, IntentId, LanguageId } from '@/types/domain';
@@ -58,8 +58,11 @@ const Ctx = createContext<{ draft: OnboardingDraft; update: (patch: Partial<Onbo
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [draft, setDraft, hydrated] = usePersistentState(ME_KEY, initial);
+  // Stable functions, so effects that depend on them don't re-run every render.
+  const update = useCallback((patch: Partial<OnboardingDraft>) => setDraft((d) => ({ ...d, ...patch })), [setDraft]);
+  const reset = useCallback(() => setDraft(initial), [setDraft]);
   return (
-    <Ctx value={{ draft, hydrated, update: (patch) => setDraft((d) => ({ ...d, ...patch })), reset: () => setDraft(initial) }}>{children}</Ctx>
+    <Ctx value={useMemo(() => ({ draft, hydrated, update, reset }), [draft, hydrated, update, reset])}>{children}</Ctx>
   );
 }
 
