@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Card, Eyebrow, Field, Icon, ListRow, Text } from '@/components';
+import { Button, Card, Eyebrow, Field, FormScrollView, Icon, KeyboardDoneBar, ListRow, Text } from '@/components';
 import { deleteMyAccount } from '@/features/api';
 import { ME_KEY, useOnboarding } from '@/features/onboarding/onboarding-context';
 import { SOCIAL_KEY, useSocial } from '@/features/social/social-store';
@@ -40,7 +40,7 @@ export default function DeleteAccount() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      <ScrollView keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: spacing.margin, gap: spacing.lg, maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
+      <FormScrollView keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: spacing.margin, gap: spacing.lg, maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
         <Text variant="headlineXl" accessibilityRole="header">
           Delete your account?
         </Text>
@@ -72,7 +72,7 @@ export default function DeleteAccount() {
           <Eyebrow>Type DELETE to confirm</Eyebrow>
           <Field accessibilityLabel="Type DELETE to confirm" placeholder="DELETE" value={typed} onChangeText={setTyped} autoCapitalize="characters" autoCorrect={false} />
         </View>
-      </ScrollView>
+      </FormScrollView>
       <View style={{ paddingHorizontal: spacing.margin, paddingTop: spacing.sm, paddingBottom: Math.max(insets.bottom, spacing.md), gap: spacing.sm }}>
         {error ? (
           <Text variant="labelMd" color="error" center>
@@ -81,6 +81,7 @@ export default function DeleteAccount() {
         ) : null}
         <Button title={busy ? 'Deleting…' : 'Delete my account'} variant="warm" haptics="none" disabled={!confirmed || busy} onPress={remove} />
       </View>
+      <KeyboardDoneBar />
     </View>
   );
 }

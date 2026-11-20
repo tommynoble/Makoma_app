@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { ScrollView, Share, View } from 'react-native';
+import { Share, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Card, Eyebrow, Field, Icon, Text, type IconName } from '@/components';
+import { Button, Card, Eyebrow, Field, FormScrollView, Icon, type IconName, KeyboardDoneBar, Text } from '@/components';
 import { useSocial } from '@/features/social/social-store';
 import { haptic } from '@/lib/motion';
 import { colors, fonts, maxContentWidth, spacing } from '@/theme';
@@ -52,7 +52,7 @@ export default function DatePlanScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      <ScrollView keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: spacing.margin, paddingTop: spacing.lg, gap: spacing.section, maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
+      <FormScrollView keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: spacing.margin, paddingTop: spacing.lg, gap: spacing.section, maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
         <View style={{ gap: spacing.sm }}>
           <Text variant="headlineXl" accessibilityRole="header">
             Meeting {name}?
@@ -98,10 +98,11 @@ export default function DatePlanScreen() {
             </View>
           ))}
         </View>
-      </ScrollView>
+      </FormScrollView>
       <View style={{ paddingHorizontal: spacing.margin, paddingTop: spacing.sm, paddingBottom: Math.max(insets.bottom, spacing.md), borderTopWidth: 1, borderTopColor: colors.hairline }}>
         <Button title={`Share with ${contactName.trim() || 'your contact'}`} icon="share" disabled={!ready} onPress={share} />
       </View>
+      <KeyboardDoneBar />
     </View>
   );
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Card, CodeInput, Enter, Eyebrow, IconBadge, Text } from '@/components';
+import { Button, Card, CodeInput, Enter, Eyebrow, FormScrollView, IconBadge, KeyboardDoneBar, Text } from '@/components';
 import { normalizeGhanaPhone } from '@/constants/ghana';
 import { pullMyProfile } from '@/features/backend/profile-sync';
 import { useOnboarding } from '@/features/onboarding/onboarding-context';
@@ -95,7 +95,8 @@ export default function Phone() {
   const field = { backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.hairline, paddingHorizontal: spacing.md, minHeight: 58, justifyContent: 'center' } as const;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.surface, paddingTop: insets.top + 56, paddingHorizontal: spacing.lg, paddingBottom: insets.bottom + spacing.md }}>
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
+      <FormScrollView bottomOffset={120} style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 56, paddingHorizontal: spacing.lg, paddingBottom: insets.bottom + spacing.md }}>
       <View style={{ width: '100%', maxWidth: maxContentWidth, alignSelf: 'center', alignItems: 'center' }}>
         <Enter index={0} style={{ alignItems: 'center' }}>
           <View style={{ boxShadow: shadows.warm, borderRadius: 40, marginBottom: spacing.xl }}>
@@ -235,6 +236,8 @@ export default function Phone() {
           By continuing, you agree to Makoma’s Terms and Privacy Policy.
         </Text>
       </View>
+      </FormScrollView>
+      <KeyboardDoneBar />
     </View>
   );
 }

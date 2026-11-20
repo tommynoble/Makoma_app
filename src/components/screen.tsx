@@ -1,10 +1,11 @@
 import { Children, type ReactNode } from 'react';
-import { KeyboardAvoidingView, ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, maxContentWidth, shadows, spacing } from '@/theme';
 import { IconButton } from './button';
 import { Enter } from './enter';
+import { FormScrollView, KeyboardDoneBar } from './keyboard';
 import { ProgressSegments } from './surface';
 import { Text } from './text';
 
@@ -63,7 +64,7 @@ export function Screen({
     </View>
   );
   return (
-    <KeyboardAvoidingView behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: colors.surface }}>
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
       {step ? (
         <View style={{ paddingTop: insets.top + spacing.sm, backgroundColor: colors.surface, zIndex: 1 }}>
           <View style={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.sm, maxWidth: maxContentWidth, width: '100%', alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
@@ -94,12 +95,9 @@ export function Screen({
         </View>
       )}
       {scroll ? (
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ paddingTop: spacing.lg + spacing.xs, paddingBottom: spacing.xl + (footer || !bottomInset ? 0 : insets.bottom) }}
-        >
+        <FormScrollView contentContainerStyle={{ paddingTop: spacing.lg + spacing.xs, paddingBottom: spacing.xl + (footer || !bottomInset ? 0 : insets.bottom) }}>
           {body}
-        </ScrollView>
+        </FormScrollView>
       ) : (
         <View style={{ flex: 1 }}>{children}</View>
       )}
@@ -119,7 +117,8 @@ export function Screen({
           {footer}
         </View>
       ) : null}
-    </KeyboardAvoidingView>
+      {scroll ? <KeyboardDoneBar /> : null}
+    </View>
   );
 }
 

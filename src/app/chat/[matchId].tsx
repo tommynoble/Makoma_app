@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
-import { FlatList, KeyboardAvoidingView, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -27,6 +28,8 @@ import type { GiftOffer, GiftUnlock, Message } from '@/types/domain';
  */
 export default function Chat() {
   const insets = useSafeAreaInsets();
+  const probe = useRef<ComponentRef<typeof View>>(null);
+  const [top, setTop] = useState(0);
   const { matchId } = useLocalSearchParams<{ matchId: string }>();
   const social = useSocial();
   const match = social.state.matches[matchId];
@@ -207,7 +210,10 @@ export default function Chat() {
   };
 
   return (
-    <KeyboardAvoidingView behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={insets.top + 44} style={{ flex: 1, backgroundColor: colors.surface }}>
+    // Both platforms: Android is edge-to-edge, so the window doesn't resize for the keyboard.
+    // The offset is where this screen starts (below the header), measured rather than guessed.
+    <KeyboardAvoidingView behavior="padding" keyboardVerticalOffset={top} style={{ flex: 1, backgroundColor: colors.surface }}>
+      <View ref={probe} onLayout={() => probe.current?.measureInWindow((_x, y) => setTop(Math.round(y)))} />
       <Stack.Screen
         options={{
           headerTitle: () => (
@@ -232,6 +238,8 @@ export default function Chat() {
       <FlatList
         ref={list}
         data={messages}
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
         keyExtractor={(m) => m.id}
         contentContainerStyle={{ padding: spacing.margin, gap: spacing.md }}
         ListHeaderComponent={

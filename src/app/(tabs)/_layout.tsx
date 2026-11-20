@@ -15,6 +15,7 @@ export default function TabsLayout() {
     <Tabs
       screenListeners={{ tabPress: () => haptic.select() }}
       screenOptions={{
+        tabBarHideOnKeyboard: true,
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.onSurfaceVariant,

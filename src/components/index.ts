@@ -12,3 +12,4 @@ export * from './code-input';
 export * from './voice-bubble';
 export * from './chip';
 export * from './list-row';
+export * from './keyboard';

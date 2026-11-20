@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Icon, IconButton, Pill, Text } from '@/components';
+import { Button, FormScrollView, Icon, IconButton, KeyboardDoneBar, Pill, Text } from '@/components';
 import { ageOf } from '@/components/profile/sections';
 import { promptById } from '@/constants/prompts';
 import { useSocial } from '@/features/social/social-store';
@@ -77,7 +77,8 @@ export default function Reply() {
   const hasReply = note.trim().length > 0 || voiceSecs != null;
 
   return (
-    <ScrollView
+    <View style={{ flex: 1, backgroundColor: colors.surfaceContainerLowest }}>
+    <FormScrollView
       keyboardShouldPersistTaps="handled"
       style={{ backgroundColor: colors.surfaceContainerLowest }}
       contentContainerStyle={{ paddingHorizontal: spacing.margin, paddingTop: spacing.lg, paddingBottom: Math.max(insets.bottom, spacing.md) + spacing.sm, gap: spacing.lg }}
@@ -190,6 +191,8 @@ export default function Reply() {
         <Button title={hasReply ? 'Send Like & Comment' : 'Send Like'} haptics="none" icon="arrow_forward" loading={busy} onPress={() => send(true)} />
         {hasReply ? <Button title="Send like only" variant="tonal" size="md" haptics="none" disabled={busy} onPress={() => send(false)} /> : null}
       </View>
-    </ScrollView>
+    </FormScrollView>
+    <KeyboardDoneBar />
+    </View>
   );
 }

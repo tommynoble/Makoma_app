@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Card, Eyebrow, Field, Icon, IconButton, Text } from '@/components';
+import { Button, Card, Eyebrow, Field, FormScrollView, Icon, IconButton, KeyboardDoneBar, Text } from '@/components';
 import { PROMPT_SLOTS, promptById } from '@/constants/prompts';
 import { useSaveProfile } from '@/features/backend/use-save-profile';
 import { useOnboarding } from '@/features/onboarding/onboarding-context';
@@ -44,7 +44,7 @@ export default function EditPrompts() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      <ScrollView
+      <FormScrollView
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ padding: spacing.lg, gap: spacing.section, maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}
@@ -143,7 +143,7 @@ export default function EditPrompts() {
             );
           })}
         </View>
-      </ScrollView>
+      </FormScrollView>
       <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: Math.max(insets.bottom, spacing.md), maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
         {saveError ? (
           <Text variant="labelMd" color="error" center style={{ marginBottom: spacing.sm }}>
@@ -152,6 +152,7 @@ export default function EditPrompts() {
         ) : null}
         <Button title={saving ? 'Saving…' : answered === 3 ? 'Save prompts' : `Save (${answered}/3 answered)`} haptics="none" disabled={saving} onPress={done} />
       </View>
+      <KeyboardDoneBar />
     </View>
   );
 }

@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Chip, Eyebrow, Field, Icon, IconButton, PressableScale, Text } from '@/components';
+import { Button, Chip, Eyebrow, Field, FormScrollView, Icon, IconButton, KeyboardDoneBar, PressableScale, Text } from '@/components';
 import { CITIES, INSTITUTIONS, LANGUAGES, NEIGHBORHOODS } from '@/constants/ghana';
 import { INTENTS } from '@/constants/intents';
 import { MOCK_ME } from '@/features/mock-data';
@@ -99,7 +99,7 @@ export default function EditProfile() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      <ScrollView
+      <FormScrollView
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ padding: spacing.margin, paddingTop: spacing.lg, gap: spacing.section, maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}
@@ -198,7 +198,7 @@ export default function EditProfile() {
         <Section title="Roots (optional)">
           <Field accessibilityLabel="Hometown and family roots" value={form.heritage} onChangeText={(heritage) => set({ heritage })} placeholder="e.g. Kumasi • Accra" />
         </Section>
-      </ScrollView>
+      </FormScrollView>
       <View style={{ paddingHorizontal: spacing.margin, paddingTop: spacing.md, paddingBottom: Math.max(insets.bottom, spacing.md), gap: spacing.sm, backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.hairline }}>
         {error ? (
           <Text variant="labelMd" color="error" center accessibilityLiveRegion="polite">
@@ -207,6 +207,7 @@ export default function EditProfile() {
         ) : null}
         <Button title={saving ? 'Saving…' : 'Save changes'} haptics="none" disabled={saving} onPress={save} />
       </View>
+      <KeyboardDoneBar />
     </View>
   );
 }

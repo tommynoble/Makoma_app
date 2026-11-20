@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Card, Eyebrow, Field, Icon, RadioMark, Text, Toggle } from '@/components';
+import { Button, Card, Eyebrow, Field, FormScrollView, Icon, KeyboardDoneBar, RadioMark, Text, Toggle } from '@/components';
 import { useSocial } from '@/features/social/social-store';
 import { haptic } from '@/lib/motion';
 import { colors, fonts, radius, spacing } from '@/theme';
@@ -87,7 +87,7 @@ export default function Report() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg }}>
+      <FormScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg }}>
         <View style={{ gap: spacing.sm }}>
           <Text variant="headlineLg" accessibilityRole="header">
             Report {name}
@@ -138,7 +138,7 @@ export default function Report() {
           </View>
           <Toggle value={alsoBlock} onChange={setAlsoBlock} label={`Also block ${name}`} />
         </View>
-      </ScrollView>
+      </FormScrollView>
       <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: Math.max(insets.bottom, spacing.md), gap: spacing.sm }}>
         {error ? (
           <Text variant="labelMd" color="error" center>
@@ -147,6 +147,7 @@ export default function Report() {
         ) : null}
         <Button title={busy ? 'Sending…' : alsoBlock ? 'Report and block' : 'Send report'} variant="warm" haptics="none" disabled={!reason || busy} onPress={submit} />
       </View>
+      <KeyboardDoneBar />
     </View>
   );
 }
