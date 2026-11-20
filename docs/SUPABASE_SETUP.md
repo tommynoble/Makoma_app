@@ -29,10 +29,12 @@ How the app behaves when connected:
 
 1. **Create the project**: supabase.com → New project → name `makoma`, region **West EU (London)**
    (closest to Ghana). Save the database password somewhere safe.
-2. **Phone sign-in**: Authentication → Sign In / Providers → **Phone** → enable.
-   - For testing, add **test phone numbers** with fixed codes, e.g. `233241234567` → `123456`.
-     No SMS provider or cost needed.
-   - For real users, connect an SMS provider (Twilio is built in and works in Ghana).
+2. **Sign-in**: the app signs in with a **6-digit email code** for now (no setup: Email is on by
+   default, and the setup script switches the email to a code). Note: Supabase's built-in email only
+   delivers to members of your Supabase organization and a few emails per hour. Before inviting
+   testers, add custom SMTP (e.g. Resend, free tier) under Authentication → Emails → SMTP.
+   - **SMS later**: Authentication → Sign In / Providers → **Phone** with an SMS provider (Twilio is
+     built in; Arkesel/Hubtel are cheaper in Ghana via a hook), then set `EXPO_PUBLIC_SIGN_IN_METHOD=phone`.
 3. **Copy**: Project Settings → API → **Project URL** and the **anon public** key.
    Never share the `service_role` key.
 4. **Access token** (for the setup script): Account → Access Tokens → generate one.

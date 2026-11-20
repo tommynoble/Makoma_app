@@ -17,11 +17,16 @@ function formatLocal(digits: string) {
 }
 
 const RESEND_SECONDS = 30;
+const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
+/** Which sign-in shows first. Email until an SMS provider is set up; set EXPO_PUBLIC_SIGN_IN_METHOD=phone to switch. */
+const DEFAULT_METHOD: 'email' | 'phone' = process.env.EXPO_PUBLIC_SIGN_IN_METHOD === 'phone' ? 'phone' : 'email';
 
-/** Phone sign-in (SMS code). SIM-registered numbers deter throwaway accounts. */
+/** Sign-in with a 6-digit code by email or SMS. (SIM-registered phone numbers deter throwaway accounts; email is the stopgap until SMS is set up.) */
 export default function Phone() {
   const insets = useSafeAreaInsets();
   const { draft, update } = useOnboarding();
+  const [method, setMethod] = useState<'email' | 'phone'>(DEFAULT_METHOD);
+  const [email, setEmail] = useState('');
   const [digits, setDigits] = useState('');
   const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
@@ -37,18 +42,20 @@ export default function Phone() {
     return () => clearTimeout(t);
   }, [resendIn]);
 
+  const target = method === 'email' ? (isEmail(email) ? email.trim().toLowerCase() : null) : phone;
+
   const sendCode = async () => {
-    if (!phone) return;
+    if (!target) return;
     setError(null);
     setBusy(true);
     if (isBackendConfigured) {
-      const { error } = await supabase.auth.signInWithOtp({ phone });
+      const { error } = method === 'email' ? await supabase.auth.signInWithOtp({ email: target, options: { shouldCreateUser: true } }) : await supabase.auth.signInWithOtp({ phone: target });
       if (error) {
         setBusy(false);
         return setError(error.message);
       }
     }
-    update({ phone });
+    update(method === 'email' ? { email: target } : { phone: target });
     setBusy(false);
     setSent(true);
     setCode('');
@@ -59,8 +66,8 @@ export default function Phone() {
     if (token.length < 6 || busy) return;
     setError(null);
     setBusy(true);
-    if (isBackendConfigured && phone) {
-      const { error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' });
+    if (isBackendConfigured && target) {
+      const { error } = method === 'email' ? await supabase.auth.verifyOtp({ email: target, token, type: 'email' }) : await supabase.auth.verifyOtp({ phone: target, token, type: 'sms' });
       if (error) {
         setBusy(false);
         haptic.light();
@@ -108,7 +115,7 @@ export default function Phone() {
               <>
                 <Eyebrow>Enter the 6-digit code</Eyebrow>
                 <Text variant="labelMd" color="tertiary" style={{ fontFamily: fonts.sansMedium, fontSize: 14 }}>
-                  Sent to +233 {formatLocal(digits)}.{' '}
+                  Sent to {method === 'email' ? target : `+233 ${formatLocal(digits)}`}.{method === 'email' ? ' Check your spam folder too.' : ''}{' '}
                   <Text variant="labelMd" color="primary" onPress={() => setSent(false)} style={{ fontFamily: fonts.sansBold, fontSize: 14 }} accessibilityRole="link">
                     Change
                   </Text>
@@ -135,6 +142,42 @@ export default function Phone() {
                 <Pressable accessibilityRole="button" disabled={resendIn > 0} onPress={sendCode} hitSlop={10} style={{ alignSelf: 'center', minHeight: 36, justifyContent: 'center' }}>
                   <Text variant="labelMd" color={resendIn > 0 ? 'tertiary' : 'primary'} style={{ fontFamily: fonts.sansBold }}>
                     {resendIn > 0 ? `Resend code in 0:${String(resendIn).padStart(2, '0')}` : 'Resend code'}
+                  </Text>
+                </Pressable>
+              </>
+            ) : method === 'email' ? (
+              <>
+                <Eyebrow>Email</Eyebrow>
+                <View style={[field, { borderColor: email && !isEmail(email) && email.includes('.') ? colors.error : colors.hairline }]}>
+                  <TextInput
+                    accessibilityLabel="Email address"
+                    style={{ fontFamily: fonts.sansSemiBold, fontSize: 17, color: colors.onSurface, paddingVertical: 14 }}
+                    keyboardType="email-address"
+                    textContentType="emailAddress"
+                    autoComplete="email"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    placeholder="you@example.com"
+                    placeholderTextColor={colors.tertiaryContainer}
+                    value={email}
+                    onChangeText={setEmail}
+                    onSubmitEditing={sendCode}
+                    returnKeyType="send"
+                    autoFocus
+                  />
+                </View>
+                <Text variant="labelMd" color="tertiary" style={{ fontFamily: fonts.sansMedium, fontSize: 14, lineHeight: 20 }}>
+                  We’ll email you a secure 6-digit code. No password needed.
+                </Text>
+                {error ? (
+                  <Text variant="labelMd" color="error" selectable>
+                    {error}
+                  </Text>
+                ) : null}
+                <Button title="Continue with Email" disabled={!target} loading={busy} onPress={sendCode} />
+                <Pressable accessibilityRole="button" onPress={() => { setError(null); setMethod('phone'); }} hitSlop={10} style={{ alignSelf: 'center', minHeight: 36, justifyContent: 'center' }}>
+                  <Text variant="labelMd" color="primary" style={{ fontFamily: fonts.sansBold }}>
+                    Use phone number instead
                   </Text>
                 </Pressable>
               </>
@@ -177,7 +220,12 @@ export default function Phone() {
                     {error}
                   </Text>
                 ) : null}
-                <Button title="Continue with Phone" disabled={!phone} loading={busy} onPress={sendCode} />
+                <Button title="Continue with Phone" disabled={!target} loading={busy} onPress={sendCode} />
+                <Pressable accessibilityRole="button" onPress={() => { setError(null); setMethod('email'); }} hitSlop={10} style={{ alignSelf: 'center', minHeight: 36, justifyContent: 'center' }}>
+                  <Text variant="labelMd" color="primary" style={{ fontFamily: fonts.sansBold }}>
+                    Use email instead
+                  </Text>
+                </Pressable>
               </>
             )}
           </Card>

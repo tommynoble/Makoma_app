@@ -60,7 +60,8 @@ export default function Settings() {
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: colors.surface }} contentContainerStyle={{ padding: spacing.margin, paddingBottom: spacing.xl, gap: spacing.lg, maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
       <Section title="Account">
-        <ListRow icon="phone_iphone" title="Phone number" body={phone} />
+        {draft.email ? <ListRow icon="mail" title="Email" body={draft.email} /> : null}
+        {draft.phone || !draft.email ? <ListRow icon="phone_iphone" title="Phone number" body={phone} /> : null}
         <ListRow
           icon="pause_circle"
           title="Pause my profile"

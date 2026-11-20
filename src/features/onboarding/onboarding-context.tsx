@@ -6,6 +6,7 @@ import type { Gender, IntentId, LanguageId } from '@/types/domain';
 /** The signed-in user's own profile (demo: saved on the device). */
 export interface OnboardingDraft {
   phone?: string;
+  email?: string;
   onboarded: boolean;
   pledgeAccepted: boolean;
   intent?: IntentId;
